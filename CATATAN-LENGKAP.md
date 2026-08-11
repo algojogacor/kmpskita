@@ -1,14 +1,15 @@
-# Kampus Kita Lite — Catatan Lengkap
+# Kampus Kita Lite — Catatan Lengkap (arsip)
 
 > Dokumen pegangan proyek (mirror dari Claude memory). Update jika ada temuan baru.
-> Terakhir diperbarui: 2026-08-12.
+> Terakhir diperbarui: 2026-08-12. Versi publik — data pribadi diganti
+> placeholder `<…>`; isi asli hanya di perangkat pemilik (config.json & memory).
 
 ## Profil
 
-- **Nama**: Arya Rizky Ardhi Pratama — UNAIR Fakultas Hukum, S1, NIM 626103051310
-- **Angkatan**: 2026 · kelas: A-2 / C-2 / PDB93 · 20 SKS (Ganjil 2026/2027)
-- **ID internal**: idMhs 265756 · idPengguna 487101 · prodi 51 (Ilmu Hukum)
-- **Email kampus**: arya.rizky.ardhi.fh-2026@student.unair.ac.id
+- **Nama**: `<nama>` — UNAIR Fakultas Hukum, S1, NIM `<NIM>`
+- **Angkatan**: `<tahun>` · kelas: `<kelas>` · `<SKS>` SKS
+- **ID internal**: idMhs `<idMhs>` · idPengguna `<idPengguna>` · prodi `<kode>`
+- **Email kampus**: `<nama>@student.unair.ac.id`
 - **Login app**: email kampus + password (login TIDAK menerima NIM). Password
   tidak disimpan di dokumen ini. Format valid = **email + password PLAINTEXT**
   (bukan sha256, lihat bagian Login).
@@ -17,13 +18,14 @@
 
 | Item | Path |
 |---|---|
-| Client CLI | `D:\Projects\kampuskita-lite\kk_lite.py` |
-| Token tersimpan | `C:\Users\Arya Rizky\.kk_lite\config.json` |
-| Web statis (deploy Vercel) | `D:\Projects\kampuskita-lite\` (index.html di root repo, repo `algojogacor/kmpskita`) |
-| APK debug (untuk dumpphone) | `D:\Projects\kampuskita-standalone-aligned-signed.apk` |
-| adb | `D:\Projects\platform-tools\adb.exe` |
-| Binary reverse-engineered | `D:\Projects\kampuskita-split-arm64\lib\arm64-v8a\libapp.so` |
-| Claude memory | `C:\Users\Arya Rizky\.claude\projects\D--\memory\` (user-arya-rizky, project-kampuskita-kklite, feedback-kampuskita-network) |
+| Client CLI | `kk_lite.py` (root repo ini) |
+| Token tersimpan | `~/.kk_lite/config.json` (`%USERPROFILE%\.kk_lite\config.json` di Windows) |
+| Web statis (deploy Vercel) | root repo ini (`index.html`; repo `algojogacor/kmpskita`) |
+| Proxy login serverless | `api/login.js` (folder `api/` = Vercel functions) |
+| Probe scripts (arsip) | `scripts/` di repo ini |
+| Panduan teman | `PANDUAN-PENGGUNA.md` |
+| adb (untuk dumpphone) | SDK platform-tools (`adb.exe`) |
+| Binary app reverse-engineered | dari APK `id.ac.unair.kampuskitamahasiswa` (libapp.so) |
 
 ## API — Fakta Terverifikasi
 

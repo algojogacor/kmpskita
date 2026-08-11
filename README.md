@@ -4,7 +4,14 @@ Akses data akademik UNAIR **tanpa aplikasi Flutter yang berat**.
 Hasil reverse-engineering dari `id.ac.unair.kampuskitamahasiswa` v2.1.2
 (string literals di `libapp.so` + verifikasi dari dump HP).
 
-Python 3.8+ — **stdlib only** (urllib, json, hashlib, base64). Tanpa pip install.
+Repo ini **bukan cuma web deploy** — ini arsip lengkap proyek (guidebook):
+CLI, web PWA, proxy login, probe scripts, dan catatan temuan. Kalau isi laptop
+hilang, semua yang dibutuhkan untuk mereproduksi ada di sini.
+
+- **Pemakai non-teknis (teman)**: baca [PANDUAN-PENGGUNA.md](PANDUAN-PENGGUNA.md)
+  — cukup buka web → login email+password.
+- **Dokumen teknis & arsip temuan**: [CATATAN-LENGKAP.md](CATATAN-LENGKAP.md).
+- Python 3.8+ — **stdlib only** (urllib, json, hashlib, base64). Tanpa pip install.
 
 ## Cara pakai
 
@@ -132,6 +139,17 @@ Atau via dashboard: import repo GitHub → **Root Directory kosong (root repo)**
 Tanpa Vercel juga bisa: upload isi repo (index.html dkk) ke GitHub Pages /
 Netlify Drop — sama saja.
 
+## Struktur repo (arsip)
+
+```
+index.html, manifest.json, sw.js, vercel.json  → PWA web (deploy Vercel)
+api/login.js                                    → proxy login serverless (Vercel)
+kk_lite.py                                      → CLI + server lokal (serve)
+scripts/                                        → probe scripts (arsip temuan API)
+PANDUAN-PENGGUNA.md                             → panduan non-teknis untuk teman
+CATATAN-LENGKAP.md                              → catatan teknis lengkap (guidebook)
+```
+
 ## Catatan
 
 - Token tersimpan di `%USERPROFILE%\.kk_lite\config.json` (token = milik user sendiri,
@@ -139,3 +157,13 @@ Netlify Drop — sama saja.
 - Submit presensi butuh token apicybercampus (sistem berbeda, belum dipecahkan).
   Data presensi yang TAMPAK di app & wrapper adalah data asli dari server —
   bukan hasil manipulasi.
+
+## Etika & legal
+
+- **Bukan app resmi UNAIR.** Semua akses memakai kredensial & token akun **sendiri**
+  (login resmi ke server resmi) — tidak ada akses ke data orang lain.
+- Jangan commit `config.json` / token / password ke repo publik (sudah di `.gitignore`).
+- Jangan bagikan APK hasil modifikasi/re-sign ke publik (distribusi app UNAIR
+  bukan kewenangan kita) — dokumentasi cara mendapatkannya saja.
+- Data yang ditampilkan adalah data asli server; **memalsukan kehadiran (fake
+  100%) tidak didukung** — itu kecurangan akademik.
