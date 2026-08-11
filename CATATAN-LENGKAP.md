@@ -9,9 +9,9 @@
 - **Angkatan**: 2026 · kelas: A-2 / C-2 / PDB93 · 20 SKS (Ganjil 2026/2027)
 - **ID internal**: idMhs 265756 · idPengguna 487101 · prodi 51 (Ilmu Hukum)
 - **Email kampus**: arya.rizky.ardhi.fh-2026@student.unair.ac.id
-- **Login app**: email + password (login TIDAK menerima NIM). Password tidak
-  disimpan di dokumen ini — hash sha256 ada sebagai `flutter.validPassword` di HP
-  (lihat `dumpphone`).
+- **Login app**: email kampus + password (login TIDAK menerima NIM). Password
+  tidak disimpan di dokumen ini. Format valid = **email + password PLAINTEXT**
+  (bukan sha256, lihat bagian Login).
 
 ## File & Lokasi
 
@@ -27,15 +27,23 @@
 
 ## API — Fakta Terverifikasi
 
-### Login
+### Login (format TERVERIFIKASI 2026-08-12)
 ```
 POST https://apikampuskita-mahasiswa.unair.ac.id/auth/login
-Body (form): EMAIL_PENGGUNA=<email kampus>  DRIVE_PASS=sha256(<password>)
-→ JSON berisi JWT HS256, payload {IDMhs, IDPengguna, exp, username}
+Body (form): email=<email kampus>  password=<password PLAINTEXT>
+→ HTTP 200, JWT baru keluar via header Set-Cookie: token=<JWT>; domain=localhost;
+  HttpOnly; SameSite=Lax  (body juga berisi profil lengkap + token)
 ```
-JWT berlaku ~1 tahun (exp Jan 2027). Cara refresh:
-1. HP terhubung USB (adb) + app sudah login → `python kk_lite.py dumpphone`
-2. atau `python kk_lite.py login -e <email> -p <password>` (butuh jaringan yang tembus)
+- Format **lama** app (`EMAIL_PENGGUNA` + `DRIVE_PASS=sha256(password)`) → **422**
+  "Email is required / Password is required". API cuma terima email+password
+  plaintext. (Hash sha256 lama tetap ada di HP sebagai `flutter.validPassword`.)
+- JWT HS256, payload `{IDMhs, IDPengguna, exp, username}`, berlaku ~1 tahun.
+- `domain=localhost` di Set-Cookie = bug config dev server UNAIR + `HttpOnly` →
+  browser tidak bisa baca → web butuh proxy serverless (`api/login.js`).
+- Refresh token:
+  1. `python kk_lite.py login -e <email> -p <password>` — **login penuh dari PC,
+     tanpa HP** (butuh jaringan yang tembus: data seluler / USB tethering).
+  2. atau `python kk_lite.py dumpphone` (HP USB + app sudah login).
 
 ### Autentikasi endpoint
 - Header `Authorization: Bearer <JWT>` **wajib** (query `?token=` saja tidak cukup
@@ -86,14 +94,22 @@ JWT berlaku ~1 tahun (exp Jan 2027). Cara refresh:
 
 1. **kk_lite.py** — CLI + server lokal (`serve`, port 8888, bind 0.0.0.0, wrapper
    tab Hari Ini/Minggu Ini/Presensi/Nilai/Status/E-Learning).
-2. **web/ (PWA statis)** — untuk Vercel: fetch langsung ke API, token di
-   localStorage HP. Ikon home screen via "Add to Home screen".
-3. **CATATAN-LENGKAP.md** — dokumen ini.
+2. **PWA statis (root repo, deploy Vercel)** — `index.html` fetch langsung ke API
+   (CORS terbuka), token di localStorage HP. Ikon home screen via "Add to Home
+   screen". Setup view punya **form login email+password** → POST `api/login.js`
+   (Vercel serverless proxy baca JWT dari Set-Cookie, stateless) + fallback paste
+   token untuk host tanpa serverless.
+3. **api/login.js** — proxy login serverless (Vercel). Browser tidak bisa baca
+   Set-Cookie UNAIR (HttpOnly + domain=localhost), jadi fungsi ini forward login,
+   ambil JWT dari Set-Cookie, kembalikan ke browser. Tanpa state, tanpa simpan
+   apa pun.
+4. **CATATAN-LENGKAP.md** — dokumen ini.
 
 ## Status verifikasi web statis (2026-08-12)
 
-- `web/` (PWA statis) **terbukti end-to-end**: host di PC → buka dari browser HP
-  via adb → fetch langsung ke API (CORS lolos) → jadwal tampil di HP.
+- PWA statis (index.html di root repo) **terbukti end-to-end**: host di PC →
+  buka dari browser HP via adb → fetch langsung ke API (CORS lolos) → jadwal
+  tampil di HP.
 - IP datacenter (AWS/Vercel) **diterima** server (dapat 401, bukan timeout) →
   deploy Vercel layak. WiFi rumah diblokir; seluler OK; VPN ke luar negeri juga
   tembus (IP datacenter diterima).

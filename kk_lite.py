@@ -57,7 +57,7 @@ def save_cfg(cfg):
 _CTX = ssl.create_default_context()
 
 def http(method, url, data=None, headers=None, timeout=20):
-    """Return (status, text). No redirect following for POST; GET follows."""
+    """Return (status, text, headers-dict). No redirect following for POST; GET follows."""
     h = {"User-Agent": "Dart/3.3 (dart:io)"}
     if headers:
         h.update(headers)
@@ -71,11 +71,11 @@ def http(method, url, data=None, headers=None, timeout=20):
     req = urllib.request.Request(url, data=body, headers=h, method=method)
     try:
         with urllib.request.urlopen(req, timeout=timeout, context=_CTX) as r:
-            return r.status, r.read().decode("utf-8", "replace")
+            return r.status, r.read().decode("utf-8", "replace"), dict(r.headers)
     except urllib.error.HTTPError as e:
-        return e.code, e.read().decode("utf-8", "replace")
+        return e.code, e.read().decode("utf-8", "replace"), dict(e.headers)
     except Exception as e:
-        return 0, str(e)
+        return 0, str(e), {}
 
 def parse_maybe(text):
     try:
@@ -92,7 +92,7 @@ def api_call(method, path, token, params=None, body=None, host=BASE_KK):
         if params:
             q.update(params)
         url += "?" + urllib.parse.urlencode(q)
-    st, txt = http(method, url, data=body, headers={"Authorization": "Bearer " + token} if token else None)
+    st, txt, _ = http(method, url, data=body, headers={"Authorization": "Bearer " + token} if token else None)
     return st, txt
 
 def api_get(path, token, params=None, host=BASE_KK):
@@ -105,27 +105,25 @@ def sha256s(s):
     return hashlib.sha256(s.encode()).hexdigest()
 
 def login_formats(email, password):
-    """Yield (label, method, url, payload). Format benar (dari dump HP):
-    POST apikampuskita /auth/login, EMAIL_PENGGUNA + DRIVE_PASS=sha256(pw)."""
+    """Yield (label, method, url, payload). Format TERVERIFIKASI (2026-08-12):
+    POST apikampuskita /auth/login, email + password PLAINTEXT.
+    Token keluar via header Set-Cookie: token=<JWT> (exp ~Jan 2027)."""
     pwd = password
     base = [
-        # -- format TERVERIFIKASI dari app (prioritas) --
-        ("kk-auth-emailpass-sha256",  "POST", BASE_KK + "/auth/login", {"EMAIL_PENGGUNA": email, "DRIVE_PASS": sha256s(pwd)}),
-        ("kk-auth-emailpass-plain",   "POST", BASE_KK + "/auth/login", {"EMAIL_PENGGUNA": email, "DRIVE_PASS": pwd}),
-        ("kk-auth-json-emailpass-sha","POST", BASE_KK + "/auth/login", json.dumps({"EMAIL_PENGGUNA": email, "DRIVE_PASS": sha256s(pwd)})),
-        # -- fallback explorer --
-        ("kk-auth-login-form",        "POST", BASE_KK + "/auth/login", {"email": email, "password": pwd}),
-        ("kk-auth-login-json",        "POST", BASE_KK + "/auth/login", json.dumps({"email": email, "password": pwd})),
-        ("kk-auth-login-sha256",      "POST", BASE_KK + "/auth/login", {"email": email, "password": sha256s(pwd)}),
-        ("unairsatu-v1-form-plain",   "POST", BASE_UN + "/token/ambil-token", {"email": email, "password": pwd}),
-        ("unairsatu-v1-form-uep",     "POST", BASE_UN + "/token/ambil-token", {"user_email": email, "user_pass": pwd}),
-        ("kk-v2-form-sha256",         "POST", BASE_KK + "/token/ambil-token-v2", {"email": email, "password": sha256s(pwd)}),
-        ("kk-v2-json-sha256",         "POST", BASE_KK + "/token/ambil-token-v2", json.dumps({"email": email, "password": sha256s(pwd)})),
+        ("login-plain",       "POST", BASE_KK + "/auth/login", {"email": email, "password": pwd}),
+        ("login-plain-json",  "POST", BASE_KK + "/auth/login", json.dumps({"email": email, "password": pwd})),
+        ("login-emailpass",   "POST", BASE_KK + "/auth/login", {"EMAIL_PENGGUNA": email, "DRIVE_PASS": sha256s(pwd)}),
+        ("unairsatu-v1-plain","POST", BASE_UN + "/token/ambil-token", {"email": email, "password": pwd}),
     ]
     return base
 
-def extract_token(text):
-    """Try to pull a token out of any response shape (incl. JWT)."""
+def extract_token(text, headers=None):
+    """Token dari body JSON (token/access_token/JWT) ATAU header Set-Cookie."""
+    if headers:
+        sc = headers.get("Set-Cookie") or headers.get("set-cookie") or ""
+        m = re.search(r'token=([^;]+)', sc)
+        if m:
+            return m.group(1)
     if not text:
         return None
     m = re.search(r'"token"\s*:\s*"([^"]+)"', text)
@@ -150,8 +148,8 @@ def cmd_login(args):
         body = payload
         if isinstance(payload, str):
             headers = {"Content-Type": "application/json"}
-        st, txt = http(method, url, body, headers)
-        tok = extract_token(txt)
+        st, txt, hdrs = http(method, url, body, headers)
+        tok = extract_token(txt, hdrs)
         snippet = txt[:160].replace("\n", " ")
         mark = "TOKEN!" if tok else ""
         print(f"  [{label}] HTTP {st} {mark}  {snippet}")

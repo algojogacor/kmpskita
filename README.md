@@ -16,18 +16,20 @@ python kk_lite.py dumpphone
 → Menarik `flutter.token` (JWT) + profil langsung dari HP via `adb run-as`,
 menyimpannya ke `%USERPROFILE%\.kk_lite\config.json`. Tanpa install APK apapun.
 
-### Jalur 2 — Login langsung via API
+### Jalur 2 — Login langsung via API (tanpa HP!)
 ```
 python kk_lite.py login -e "email@student.unair.ac.id" -p "password"
 ```
-Format login **terverifikasi** dari binary + HP:
+Format login **terverifikasi** (2026-08-12) — **email + password plaintext**:
 ```
 POST https://apikampuskita-mahasiswa.unair.ac.id/auth/login
-EMAIL_PENGGUNA=<email kampus>
-DRIVE_PASS=sha256(<password>)
+email=<email kampus>
+password=<password>
 ```
-→ Respon berisi JWT (HS256) payload `{IDMhs, IDPengguna, exp, username}`.
-JWT berlaku lama (exp ~Jan 2027). `validPassword` yang disimpan app = sha256(password).
+→ HTTP 200; JWT (HS256) keluar via header `Set-Cookie: token=…`, payload
+`{IDMhs, IDPengguna, exp, username}`. JWT berlaku lama (exp ~Jan 2027).
+Catatan: format lama `EMAIL_PENGGUNA` + `DRIVE_PASS=sha256(...)` **ditolak API**
+(422) — hash sha256 hanya tersisa sebagai `flutter.validPassword` di HP.
 
 ### ⚠️ Jaringan
 Server apikampuskita (`210.57.208.253`) **memblokir IP rumah/PC** (TCP timeout),
@@ -113,7 +115,11 @@ langsung ke API UNAIR** — CORS server terbuka (echo origin + izinkan
 - Vercel/GitHub Pages hanya menyajikan file statis — **tidak butuh server**.
 - HP mengakses API dari jaringannya sendiri → pakai **data seluler / WiFi kampus**
   (WiFi rumah diblokir server, seluler & IP datacenter diterima — VPN juga jalan).
-- Token disimpan sekali di localStorage HP (input manual atau buka `?t=<token>`).
+- **Login di web cukup email + password kampus** — form login memanggil
+  `api/login.js` (Vercel serverless, stateless) yang meneruskan ke API UNAIR dan
+  membaca JWT dari Set-Cookie (browser tidak bisa baca karena HttpOnly).
+  Alternatif tetap ada: paste token manual (untuk host tanpa serverless, atau
+  `?t=<token>`).
 - Install: buka di Chrome → menu → *Add to Home screen*.
 
 Deploy Vercel:

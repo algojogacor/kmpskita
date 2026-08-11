@@ -45,10 +45,15 @@ a{color:var(--accent)}
 .setup input{width:100%;background:#0f172a;color:var(--fg);border:1px solid #334155;border-radius:8px;padding:10px;font-size:.9em;margin:8px 0}
 .setup button{background:var(--accent);color:#0f172a;border:0;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.95em}
 .hint{color:var(--muted);font-size:.78em;margin-top:8px}
+#out{background:none;border:0;color:var(--muted);font-size:1.05em;cursor:pointer;padding:4px 6px;border-radius:8px}
+#out:hover{background:#33415544;color:var(--fg)}
 </style></head><body>
 <header>
   <h1>📚 KK Lite</h1>
-  <div id="meta">memuat…</div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div id="meta">memuat…</div>
+    <button id="out" title="keluar / ganti akun">⏻</button>
+  </div>
 </header>
 <div id="err"></div>
 <main id="view"></main>
@@ -83,14 +88,19 @@ async function api(path, method, params){
 const apiGet=p=>api(p,'GET');
 const apiPost=(p,q)=>api(p,'POST',q);
 
-// ---- setup token ----
+// ---- setup: login email+password ATAU paste token ----
 function setupView(){
-  $('meta').textContent='atur token dulu';
-  $('view').innerHTML='<div class="setup"><div class="mk">🔑 Atur Token</div>'+
-    '<div class="hint">Token ada di <b>%USERPROFILE%\\.kk_lite\\config.json</b> (PC), atau jalankan <b>kk_lite.py dumpphone</b>.</div>'+
+  $('meta').textContent='masuk dulu';
+  $('view').innerHTML='<div class="setup"><div class="mk">🔐 Masuk — akun Kampus Kita kamu</div>'+
+    '<input id="lemail" type="email" placeholder="email kampus (nama@student.unair.ac.id)" autocomplete="username">'+
+    '<input id="lpass" type="password" placeholder="password" autocomplete="current-password">'+
+    '<button onclick="doLogin()" id="lbtn">Masuk</button>'+
+    '<div class="hint" id="lerr" style="display:none;color:#f87171"></div>'+
+    '<div class="hint" style="margin-top:14px;text-align:center;opacity:.7">— atau —</div>'+
+    '<div class="mk" style="margin-top:10px">🔑 Sudah punya token?</div>'+
     '<input id="tok" type="password" placeholder="paste JWT / token di sini" autocomplete="off">'+
-    '<button onclick="saveTok()">Simpan & Muat</button>'+
-    '<div class="hint">Token cuma disimpan di perangkat ini (localStorage). Halaman ini tidak menyimpan apapun ke server.</div></div>';
+    '<button onclick="saveTok()">Simpan Token</button>'+
+    '<div class="hint">Token cuma disimpan di perangkat ini (localStorage). Login lewat server Vercel hanya untuk meneruskan — tidak ada yang disimpan.</div></div>';
 }
 function saveTok(){
   const v=$('tok').value.trim();
@@ -98,6 +108,24 @@ function saveTok(){
   localStorage.setItem('kk_token',v);
   history.replaceState(null,'',location.pathname);
   boot();
+}
+async function doLogin(){
+  const em=$('lemail').value.trim(), pw=$('lpass').value;
+  const err=$('lerr'); err.style.display='none';
+  if(!em||!pw){ err.textContent='isi email dan password dulu'; err.style.display='block'; return; }
+  const btn=$('lbtn'); btn.disabled=true; btn.textContent='Masuk…';
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw})});
+    const j=await r.json();
+    if(!r.ok||!j.token) throw new Error(j.error||'login gagal');
+    localStorage.setItem('kk_token',j.token);
+    history.replaceState(null,'',location.pathname);
+    boot();
+  }catch(e){
+    err.textContent=e.message+(e.message.includes('fetch')?' — deploy ini tidak punya /api/login, pakai paste token.': '');
+    err.style.display='block';
+    btn.disabled=false; btn.textContent='Masuk';
+  }
 }
 // dukungan ?t=TOKEN (misal dari kk_lite) — sekali pakai
 (function(){
@@ -202,6 +230,7 @@ function boot(){
   $('meta').textContent='tersambung ke Kampus Kita';
   document.querySelectorAll('nav button')[0].click();
 }
+$('out').onclick=()=>{ localStorage.removeItem('kk_token'); setupView(); };
 if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 boot();
 </script></body></html>
