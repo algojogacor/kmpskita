@@ -1,0 +1,207 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>KK Lite — Kampus Kita</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--fg:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif;max-width:760px;margin:auto;padding-bottom:84px}
+header{padding:18px 20px 10px;position:sticky;top:0;background:var(--bg);z-index:5}
+h1{font-size:1.25em} #meta{color:var(--muted);font-size:.82em;margin-top:2px}
+#err{display:none;background:#7f1d1d;color:#fecaca;padding:10px 14px;border-radius:10px;margin:10px 20px 0}
+main{padding:6px 16px}
+#count{color:var(--muted);font-size:.85em;margin:8px 4px 10px}
+.card{background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--accent)}
+.card.done{border-left-color:var(--ok)} .card.next{border-left-color:var(--warn)}
+.time{font-weight:700;color:var(--accent);font-size:1.05em}
+.mk{font-weight:600;font-size:1.02em;margin-top:2px}
+.ruang,.dosen{color:var(--muted);font-size:.88em}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.72em;font-weight:700;margin-top:6px}
+.badge.live{background:#14532d;color:#86efac;animation:pulse 1.6s infinite}
+.badge.soon{background:#78350f;color:#fde68a}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.empty{color:var(--muted);text-align:center;padding:28px}
+.hdr{font-size:.95em;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:16px 4px 8px}
+.bar{background:#0f172a;border-radius:999px;height:8px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:999px;transition:width .5s}
+.row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #33415555;font-size:.92em}
+.row:last-child{border-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:.88em}
+th,td{padding:7px 6px;text-align:left;border-bottom:1px solid #33415555}
+th{color:var(--muted);font-size:.78em;text-transform:uppercase;letter-spacing:.03em}
+nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:blur(8px);border-top:1px solid #334155;display:flex;max-width:760px;margin:auto}
+nav button{flex:1;background:none;border:0;color:var(--muted);padding:10px 2px 12px;font-size:.68em;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button .ic{font-size:1.3em;line-height:1}
+nav button.on{color:var(--accent)}
+a{color:var(--accent)}
+.link-btn{display:block;background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:10px;text-decoration:none;color:var(--fg);border-left:4px solid var(--accent)}
+.link-btn .t{font-weight:600} .link-btn .s{color:var(--muted);font-size:.85em}
+.setup{background:var(--card);border-radius:14px;padding:18px;margin-top:10px}
+.setup input{width:100%;background:#0f172a;color:var(--fg);border:1px solid #334155;border-radius:8px;padding:10px;font-size:.9em;margin:8px 0}
+.setup button{background:var(--accent);color:#0f172a;border:0;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.95em}
+.hint{color:var(--muted);font-size:.78em;margin-top:8px}
+</style></head><body>
+<header>
+  <h1>📚 KK Lite</h1>
+  <div id="meta">memuat…</div>
+</header>
+<div id="err"></div>
+<main id="view"></main>
+<nav id="nav">
+  <button data-v="today" class="on"><span class="ic">🗓</span>Hari Ini</button>
+  <button data-v="week"><span class="ic">📅</span>Minggu Ini</button>
+  <button data-v="presensi"><span class="ic">✅</span>Presensi</button>
+  <button data-v="nilai"><span class="ic">📖</span>Nilai</button>
+  <button data-v="status"><span class="ic">🎓</span>Status</button>
+  <button data-v="elearn"><span class="ic">💻</span>E-Learning</button>
+</nav>
+<script>
+const BASE='https://apikampuskita-mahasiswa.unair.ac.id';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=s=>{ if(!s) return ''; const m=String(s).match(/^(\d{4}-\d{2}-\d{2})/); return m? m[1].split('-').reverse().join('/') : s; };
+const HARI_ID={Monday:'Senin',Tuesday:'Selasa',Wednesday:'Rabu',Thursday:'Kamis',Friday:'Jumat',Saturday:'Sabtu',Sunday:'Minggu'};
+
+function getTok(){ return localStorage.getItem('kk_token')||''; }
+async function api(path, method, params){
+  const tok=getTok();
+  if(!tok) throw new Error('token belum diatur');
+  let url=BASE+path+'?token='+encodeURIComponent(tok);
+  if(params){ const q=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&'); url+='&'+q; }
+  const opts={method:method||'GET',headers:{'Authorization':'Bearer '+tok}};
+  const r=await fetch(url,opts);
+  if(!r.ok) throw new Error('HTTP '+r.status+' — '+(await r.text()).slice(0,120));
+  const j=await r.json();
+  if(j && j.success===false) throw new Error(j.message||'error');
+  return j;
+}
+const apiGet=p=>api(p,'GET');
+const apiPost=(p,q)=>api(p,'POST',q);
+
+// ---- setup token ----
+function setupView(){
+  $('meta').textContent='atur token dulu';
+  $('view').innerHTML='<div class="setup"><div class="mk">🔑 Atur Token</div>'+
+    '<div class="hint">Token ada di <b>%USERPROFILE%\\.kk_lite\\config.json</b> (PC), atau jalankan <b>kk_lite.py dumpphone</b>.</div>'+
+    '<input id="tok" type="password" placeholder="paste JWT / token di sini" autocomplete="off">'+
+    '<button onclick="saveTok()">Simpan & Muat</button>'+
+    '<div class="hint">Token cuma disimpan di perangkat ini (localStorage). Halaman ini tidak menyimpan apapun ke server.</div></div>';
+}
+function saveTok(){
+  const v=$('tok').value.trim();
+  if(!v) return;
+  localStorage.setItem('kk_token',v);
+  history.replaceState(null,'',location.pathname);
+  boot();
+}
+// dukungan ?t=TOKEN (misal dari kk_lite) — sekali pakai
+(function(){
+  const m=location.search.match(/[?&]t=([^&]+)/);
+  if(m){ try{ localStorage.setItem('kk_token',decodeURIComponent(m[1])); }catch(e){} history.replaceState(null,'',location.pathname); }
+})();
+
+function cardJadwal(x){
+  const now=new Date(), cur=now.getHours()*60+now.getMinutes();
+  const [a,b]=x.jam.split('–');
+  let m0=0,m1=0,cls='',badge='';
+  if(a){const p=a.trim().split(':'); m0=+p[0]*60+(+p[1]||0);}
+  if(b){const p=b.trim().split(':'); m1=+p[0]*60+(+p[1]||0);}
+  if(m0&&cur>=m0&&cur<=m1) cls='done',badge='<span class="badge live">● PRESENSI SEKARANG</span>';
+  else if(m0>cur&&m0-cur<=120) cls='next',badge='<span class="badge soon">sebentar lagi</span>';
+  return '<div class="card '+cls+'"><div class="time">'+x.jam+'</div><div class="mk">'+esc(x.mk)+'</div>'+
+    '<div class="ruang">📍 '+esc(x.ruang)+'</div><div class="dosen">'+esc(x.dosen)+'</div>'+badge+'</div>';
+}
+function rowsJadwal(j){ // flatten {"data":[{"Senin":[...]}]}
+  const out=[];
+  const d=(j&&j.data)||j;
+  if(Array.isArray(d)) for(const r of d){
+    if(r&&typeof r==='object'&&Object.values(r).every(v=>Array.isArray(v))){ for(const lst of Object.values(r)) out.push(...lst); }
+    else if(r) out.push(r);
+  }
+  return out;
+}
+const VIEWS={
+  today:async()=>{
+    const j=await apiPost('/akademik/jadwal-kuliah');
+    const rows=rowsJadwal(j), today=HARI_ID[new Date().getDay()==0?6:new Date().getDay()-1] || '';
+    const dayName=new Intl.DateTimeFormat('id-ID',{weekday:'long'}).format(new Date());
+    const items=rows.filter(r=>String(r.NM_JADWAL_HARI||'').toLowerCase()===dayName.toLowerCase())
+      .map(r=>({jam:r.JAM||'',mk:r.NM_MATA_KULIAH,ruang:[r.NM_RUANGAN,r.NM_GEDUNG].filter(Boolean).join(' • '),dosen:r.NM_DOSEN}))
+      .sort((a,b)=>a.jam<b.jam?-1:1);
+    $('view').innerHTML='<div id="count">'+items.length+' jadwal hari ini</div>';
+    $('view').innerHTML+=items.length?items.map(cardJadwal).join(''):'<div class="empty">✅ Hari ini tidak ada kuliah.</div>';
+  },
+  week:async()=>{
+    const j=await apiPost('/akademik/jadwal-kuliah');
+    const rows=rowsJadwal(j), byday={};
+    for(const r of rows){ const h=r.NM_JADWAL_HARI||'?'; (byday[h]=byday[h]||[]).push({jam:r.JAM,mk:r.NM_MATA_KULIAH,ruang:[r.NM_RUANGAN,r.NM_GEDUNG].filter(Boolean).join(' • '),dosen:r.NM_DOSEN}); }
+    let h='';
+    for(const d of ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu']){
+      if(!byday[d]) continue;
+      h+='<div class="hdr">'+d+'</div>'+byday[d].sort((a,b)=>a.jam<b.jam?-1:1).map(cardJadwal).join('');
+    }
+    $('view').innerHTML=h||'<div class="empty">Belum ada jadwal.</div>';
+  },
+  presensi:async()=>{
+    const j=await apiGet('/kemahasiswaan/presensi-kuliah');
+    const rows=rowsJadwal(j);
+    $('view').innerHTML='<div id="count">'+rows.length+' mata kuliah</div>'+
+      rows.map(x=>'<div class="card"><div class="mk">'+esc(x.NM_MATA_KULIAH)+' <span style="color:var(--muted);font-size:.85em">['+esc(x.NAMA_KELAS)+'] '+x.KREDIT_SEMESTER+' SKS</span></div>'+
+      '<div class="ruang">hadir '+x.HADIR+' / '+x.TM+' &nbsp;·&nbsp; <b>'+x.PROSEN+'%</b></div>'+
+      '<div class="bar"><i style="width:'+Math.min(100,+x.PROSEN)+'%"></i></div></div>').join('');
+  },
+  nilai:async()=>{
+    const s=await apiGet('/akademik/semester-khs');
+    const sms=(s.data||[])[0];
+    if(!sms){ $('view').innerHTML='<div class="empty">Belum ada semester.</div>'; return; }
+    const j=await apiPost('/kemahasiswaan/riwayat-khs',{semester:sms.ID_SEMESTER});
+    const rows=rowsJadwal(j);
+    let tot=0; rows.forEach(r=>tot+=+r.SKS||0);
+    $('view').innerHTML='<div id="count">'+sms.TAHUN_AJARAN+' '+sms.NM_SEMESTER+' · '+rows.length+' MK · total '+tot+' SKS</div>'+
+      '<div class="card" style="padding:8px 12px"><table><tr><th>Kode</th><th>Mata Kuliah</th><th>SKS</th><th>Nilai</th></tr>'+
+      rows.map(x=>'<tr><td style="color:var(--muted)">'+esc(x.KODE)+'</td><td>'+esc(x.NAMA)+'</td><td>'+x.SKS+'</td><td><b>'+esc(x.NILAI_HURUF)+'</b></td></tr>').join('')+'</table></div>';
+  },
+  status:async()=>{
+    const j=await apiGet('/akademik/status-mhs');
+    const r=(j.data||[])[0]||{};
+    const s2=await apiGet('/akademik/sks-aktif'); const r2=(s2.data||[])[0]||{};
+    const pay=await apiGet('/kemahasiswaan/pembayaran');
+    const kal=await apiGet('/akademik/kalender-akademik');
+    $('view').innerHTML='<div class="card">'+
+      '<div class="mk">'+esc(r.NM_PROGRAM_STUDI)+'</div>'+
+      '<div class="row"><span>NIM</span><b>'+esc(r.NIM_MHS)+'</b></div>'+
+      '<div class="row"><span>Angkatan</span><b>'+esc(r.THN_ANGKATAN_MHS)+'</b></div>'+
+      '<div class="row"><span>Status</span><b>'+esc(r.NM_STATUS_PENGGUNA)+'</b></div>'+
+      '<div class="row"><span>Jenjang</span><b>'+esc(r.NM_JENJANG)+'</b></div>'+
+      '<div class="row"><span>SKS</span><b>'+r2.SKS_TEMPUH+' ('+r2.JUM_MK+' MK)</b></div>'+
+      '</div>'+
+      '<div class="hdr">Pembayaran</div><div class="card">'+
+      (pay.data||[]).map(x=>'<div class="row"><span>'+esc(x.TAHUN_AJARAN+' '+x.NM_SEMESTER)+'</span><b>'+esc(x.NAMA_STATUS)+' · Rp '+Number(x.NOMINAL_BAYAR).toLocaleString('id-ID')+'</b></div>').join('')+'</div>'+
+      '<div class="hdr">Kalender Akademik</div><div class="card">'+
+      (kal.data||[]).map(x=>'<div class="row"><span>'+esc(x.NM_KEGIATAN)+'</span><b style="color:var(--muted)">'+fmt(x.TGL_MULAI_JSF)+' s.d. '+fmt(x.TGL_SELESAI_JSF)+'</b></div>').join('')+'</div>';
+  },
+  elearn:()=>{
+    $('view').innerHTML=
+      '<a class="link-btn" href="https://hebat.elearning.unair.ac.id/hebat-v2/" target="_blank" rel="noopener"><div class="t">💻 HE-BAT (e-Learning UNAIR)</div><div class="s">hebat.elearning.unair.ac.id/hebat-v2/ · buka di tab baru</div></a>'+
+      '<a class="link-btn" href="https://apikampuskita-mahasiswa.unair.ac.id/" target="_blank" rel="noopener"><div class="t">🏛 Portal Kampus Kita</div><div class="s">sumber data</div></a>';
+  }
+};
+document.querySelectorAll('nav button').forEach(b=>b.onclick=async()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  const err=$('err'); err.style.display='none'; $('view').innerHTML='<div class="empty">memuat…</div>';
+  try{ await VIEWS[b.dataset.v](); }catch(e){ err.style.display='block'; err.textContent='Gagal: '+e.message+(e.message.includes('token')?'':' — cek jaringan (butuh data seluler/tethering)'); }
+});
+function boot(){
+  if(!getTok()){ setupView(); return; }
+  $('meta').textContent='tersambung ke Kampus Kita';
+  document.querySelectorAll('nav button')[0].click();
+}
+if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+boot();
+</script></body></html>

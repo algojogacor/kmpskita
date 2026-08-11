@@ -1,0 +1,7 @@
+# jangan pernah commit token/kredensial
+config.json
+*.token
+.env
+*.env
+__pycache__/
+*.pyc
