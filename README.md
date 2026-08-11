@@ -106,9 +106,9 @@ Catatan: kk_lite harus jalan dari jaringan yang bisa tembus API (tethering/WiFi 
 
 ## Versi web statis (deploy Vercel — laptop bisa mati)
 
-Folder `web/` = PWA statis (index.html + manifest + sw). **Browser fetch langsung
-ke API UNAIR** — CORS server terbuka (echo origin + izinkan `authorization`),
-terbukti end-to-end dari browser HP (tes 2026-08-12). Jadi:
+Repo root = PWA statis (index.html + manifest + sw di akar repo). **Browser fetch
+langsung ke API UNAIR** — CORS server terbuka (echo origin + izinkan
+`authorization`), terbukti end-to-end dari browser HP (tes 2026-08-12). Jadi:
 
 - Vercel/GitHub Pages hanya menyajikan file statis — **tidak butuh server**.
 - HP mengakses API dari jaringannya sendiri → pakai **data seluler / WiFi kampus**
@@ -116,13 +116,15 @@ terbukti end-to-end dari browser HP (tes 2026-08-12). Jadi:
 - Token disimpan sekali di localStorage HP (input manual atau buka `?t=<token>`).
 - Install: buka di Chrome → menu → *Add to Home screen*.
 
-Deploy:
+Deploy Vercel:
 ```
-cd web
 npx vercel          # pertama kali: vercel login (browser), lalu deploy
 npx vercel --prod   # update ke produksi
 ```
-Tanpa Vercel juga bisa: upload isi `web/` ke GitHub Pages / Netlify Drop — sama saja.
+Atau via dashboard: import repo GitHub → **Root Directory kosong (root repo)**
+→ Deploy. Kalau halaman 404, itu tandanya Root Directory masih `web` — kosongkan.
+Tanpa Vercel juga bisa: upload isi repo (index.html dkk) ke GitHub Pages /
+Netlify Drop — sama saja.
 
 ## Catatan
 

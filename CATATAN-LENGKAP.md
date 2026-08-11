@@ -19,7 +19,7 @@
 |---|---|
 | Client CLI | `D:\Projects\kampuskita-lite\kk_lite.py` |
 | Token tersimpan | `C:\Users\Arya Rizky\.kk_lite\config.json` |
-| Web statis (deploy Vercel) | `D:\Projects\kampuskita-lite\web\` |
+| Web statis (deploy Vercel) | `D:\Projects\kampuskita-lite\` (index.html di root repo, repo `algojogacor/kmpskita`) |
 | APK debug (untuk dumpphone) | `D:\Projects\kampuskita-standalone-aligned-signed.apk` |
 | adb | `D:\Projects\platform-tools\adb.exe` |
 | Binary reverse-engineered | `D:\Projects\kampuskita-split-arm64\lib\arm64-v8a\libapp.so` |
