@@ -107,11 +107,23 @@ async function moodleLogin(){
 }
 function moodleLoginForm(msg){
   return '<div class="setup"><div class="mk">📋 Tugas HE-BAT (e-Learning)</div>'+
-    '<div class="hint">Login dengan <b>NIM</b> + password HE-BAT — untuk daftar tugas, deadline, dan acara kuliah. Token disimpan hanya di perangkat ini.</div>'+
+    '<div class="hint">Login dengan <b>NIM</b> + password HE-BAT. Kalau selalu <b>"Invalid login"</b>, coba jalur token di bawah (mudah, tanpa perlu tahu password).</div>'+
     (msg?'<div class="hint" style="color:#f87171">'+esc(msg)+'</div>':'')+
     '<input id="mnim" type="text" placeholder="NIM" autocomplete="username">'+
     '<input id="mpass" type="password" placeholder="password HE-BAT" autocomplete="current-password">'+
-    '<button onclick="moodleLogin()">Masuk HE-BAT</button></div>';
+    '<button onclick="moodleLogin()">Masuk HE-BAT</button>'+
+    '<div class="hint" style="margin-top:14px;text-align:center;opacity:.7">— atau pakai token —</div>'+
+    '<div class="hint">1. Buka <b>hebat.elearning.unair.ac.id</b> di browser & login<br>'+
+    '2. Klik avatar kanan atas → <b>Preferences → Security keys</b><br>'+
+    '3. Service: <b>Moodle Mobile</b> → <b>Create new token</b> → salin<br>4. Tempel di bawah lalu Simpan:</div>'+
+    '<input id="mtok" type="password" placeholder="tempel token 32 karakter di sini" autocomplete="off">'+
+    '<button onclick="saveMoodleTok()">Simpan Token HE-BAT</button></div>';
+}
+function saveMoodleTok(){
+  const v=$('mtok').value.trim();
+  if(!v) return;
+  localStorage.setItem('kk_moodle_token',v);
+  document.querySelector('nav button[data-v="tugas"]').click();
 }
 async function moodleApi(fn,params){
   const u=new URL(MOODLE+'/webservice/rest/server.php');
