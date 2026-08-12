@@ -16,6 +16,7 @@ self.addEventListener('fetch', e => {
   if (u.origin !== location.origin) return; // API origin lain: selalu jaringan
   if (u.pathname.startsWith('/api/')) return; // serverless (login, moodle-cal): selalu jaringan
   if (u.pathname.startsWith('/hebat-links') && u.pathname.endsWith('.json')) return; // data link tugas (termasuk per-user): selalu segar
+  if (u.pathname.endsWith('generator-hebat.js')) return; // kode generator: selalu segar
   const isNav = e.request.mode === 'navigate';
   if (isNav) {
     e.respondWith(fetch(e.request).then(r => {

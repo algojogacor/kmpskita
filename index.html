@@ -273,7 +273,8 @@ const VIEWS={
     // kalender -> mahasiswa fakultas/kelas lain bisa punya file sendiri.
     // Fallback: hebat-links.json (data pemilik) utk pengguna tanpa file.
     const uid=(moodleCalParts(getMoodleCal())||{}).userid||'';
-    try{ links=await (await fetch('hebat-links'+(uid?'-'+uid:'')+'.json')).json(); }
+    let hasOwn=false;
+    try{ links=await (await fetch('hebat-links'+(uid?'-'+uid:'')+'.json')).json(); hasOwn=true; }
     catch(e){ if(uid) try{ links=await (await fetch('hebat-links.json')).json(); }catch(e2){} }
     // indeks dari hebat-links.json: aktivitas -> kursus/section; nama -> url; id kursus
     const actByUrl={}, actByName={};
@@ -333,7 +334,28 @@ const VIEWS={
       (btns(a)?'<div style="margin-top:6px">'+btns(a)+'</div>':'')+
       detail(a)+
       '</div>'; });
+    // ✨ Bantu teman (atau dirimu) buat data tombol: generator jalan di
+    // browser pemilik akun HE-BAT (tanpa install, tanpa password lewat web ini),
+    // hasilnya diunggah -> api/links-upload -> auto-commit ke repo.
+    if(uid&&!hasOwn){
+      html+='<details class="card" style="margin-top:12px;padding:12px 14px">'+
+        '<summary style="cursor:pointer;font-weight:600;color:var(--accent)">✨ belum ada tombol tugas? buat datamu sendiri (~2 menit, tanpa install)</summary>'+
+        '<div style="font-size:.82em;color:var(--muted);margin:8px 0">Data dibuat di browser kamu sendiri (sesi login HE-BAT kamu) — tidak ada password yang melewati web ini.</div>'+
+        '<ol style="margin:0 0 10px 20px;font-size:.85em;line-height:1.7">'+
+          '<li>Di tab baru: buka <b>hebat.elearning.unair.ac.id</b> (login). Tekan <b>F12</b> → tab <b>Console</b>. Kalau muncul peringatan, ketik <b>allow pasting</b> lalu Enter.</li>'+
+          '<li>Salin kode di bawah → tempel di Console → Enter. File <b>hebat-links-…json</b> terunduh.</li>'+
+          '<li>Seret file itu ke kotak di bawah.</li>'+
+        '</ol>'+
+        '<textarea id="gencode" readonly spellcheck="false" style="width:100%;min-height:130px;box-sizing:border-box;background:#0f172a;color:var(--fg);border:1px solid #334155;border-radius:8px;padding:8px;font-family:ui-monospace,Consolas,monospace;font-size:.7em;white-space:pre;overflow:auto" placeholder="memuat kode…"></textarea>'+
+        '<button id="gencopybtn" onclick="copyGenCode()" style="background:var(--accent);color:#0f172a;border:0;padding:6px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85em;margin-top:6px">📋 salin kode</button>'+
+        '<div id="dropzone" style="margin-top:10px;border:2px dashed var(--accent);border-radius:10px;padding:18px;text-align:center;font-size:.85em;color:var(--muted);cursor:pointer">📂 seret file <b style="color:var(--fg)">hebat-links-…json</b> ke sini — atau <b style="color:var(--accent)">pilih file</b>'+
+          '<div style="font-size:.72em;margin-top:4px">URL divalidasi (hanya hebat.elearning.unair.ac.id) · tanpa password</div></div>'+
+        '<input type="file" id="genfile" accept=".json,application/json" style="display:none">'+
+        '<div id="upstatus" style="font-size:.85em;margin-top:8px;color:var(--muted)"></div>'+
+      '</details>';
+    }
     $('view').innerHTML=html;
+    if(uid&&!hasOwn) initGenHelp();
   }
 };
 document.querySelectorAll('nav button').forEach(b=>b.onclick=async()=>{
@@ -342,6 +364,43 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=async()=>{
   const err=$('err'); err.style.display='none'; $('view').innerHTML='<div class="empty">memuat…</div>';
   try{ await VIEWS[b.dataset.v](); }catch(e){ err.style.display='block'; err.textContent='Gagal: '+e.message+(e.message.includes('token')?'':' — cek jaringan (butuh data seluler/tethering)'); }
 });
+function copyGenCode(){
+  const ta=$('gencode'); if(!ta) return;
+  const done=()=>{ const b=$('gencopybtn'); if(b){ const t=b.textContent; b.textContent='✓ tersalin'; setTimeout(()=>b.textContent=t,1500); } };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(ta.value).then(done).catch(()=>{ ta.select(); document.execCommand('copy'); done(); }); }
+  else { ta.select(); document.execCommand('copy'); done(); }
+}
+// Isi textarea kode generator + pasang handler drop/pilih file.
+async function initGenHelp(){
+  try{ const t=await (await fetch('generator-hebat.js')).text(); const ta=$('gencode'); if(ta) ta.value=t; }catch(e){}
+  const dz=$('dropzone'), fi=$('genfile'), st=$('upstatus');
+  if(!dz) return;
+  const onFile=f=>{
+    if(!f) return;
+    if(!/^hebat-links-\d+\.json$/.test(f.name)){ if(st) st.textContent='⚠️ nama file harus hebat-links-<userid>.json (sesuai hasil generator)'; return; }
+    uploadGen(f);
+  };
+  dz.onclick=()=>fi.click();
+  fi.onchange=()=>{ onFile(fi.files[0]); fi.value=''; };
+  dz.ondragover=e=>{ e.preventDefault(); dz.style.borderColor='var(--fg)'; dz.style.color='var(--fg)'; };
+  dz.ondragleave=()=>{ dz.style.borderColor='var(--accent)'; dz.style.color='var(--muted)'; };
+  dz.ondrop=e=>{ e.preventDefault(); dz.style.borderColor='var(--accent)'; dz.style.color='var(--muted)'; onFile(e.dataTransfer.files[0]); };
+}
+async function uploadGen(file){
+  const st=$('upstatus'); if(!st) return;
+  try{
+    const data=JSON.parse(await file.text());
+    const m=file.name.match(/^hebat-links-(\d+)\.json$/);
+    const fid=m?m[1]:'';
+    const calUid=(moodleCalParts(getMoodleCal())||{}).userid||'';
+    if(calUid&&fid&&fid!==calUid){ st.innerHTML='⚠️ userid file ('+esc(fid)+') beda dengan userid kalendermu ('+esc(calUid)+') — tombol tidak akan cocok. Pakai file dari akun yang sama dengan kalender.'; return; }
+    st.textContent='⏳ mengirim & commit… (20–40 detik)';
+    const r=await fetch('/api/links-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userid:fid,data})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){ st.textContent='❌ '+(j.error||('HTTP '+r.status)); return; }
+    st.innerHTML='✅ <b>berhasil!</b> '+esc(j.path)+' masuk repo. Tombol muncul setelah situs di-update — muat ulang halaman ini ±1 menit lagi.';
+  }catch(e){ st.textContent='❌ gagal baca file: '+e.message; }
+}
 function boot(){
   if(!getTok()){ setupView(); return; }
   $('meta').textContent='tersambung ke Kampus Kita';
