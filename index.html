@@ -268,8 +268,11 @@ const VIEWS={
     let evs=[];
     try{ evs=await moodleCalFetch(); }
     catch(e){ $('view').innerHTML=moodleCalForm(e.message); return; }
+    let links={tasks:[]};
+    try{ links=await (await fetch('hebat-links.json')).json(); }catch(e){}
+    const linkFor=n=>{ const nl=n.toLowerCase(); return (links.tasks||[]).find(t=>{ const tn=t.name.toLowerCase(); return tn===nl||tn.includes(nl)||nl.includes(tn); }); };
     const list=evs.filter(e=>(e.SUMMARY||'').toLowerCase().includes('due'))
-      .map(e=>({name:cleanName(e.SUMMARY),course:courseName(e.CATEGORIES),due:icsDate(e.DTSTART)}));
+      .map(e=>({name:cleanName(e.SUMMARY),course:courseName(e.CATEGORIES),due:icsDate(e.DTSTART),url:(linkFor(cleanName(e.SUMMARY))||{}).url||''}));
     list.sort((a,b)=>a.due-b.due);
     const badge=a=>{
       if(!a.due) return '<span style="color:var(--muted);font-size:.75em">tanpa tanggal</span>';
@@ -285,7 +288,9 @@ const VIEWS={
     list.forEach(a=>{ html+='<div class="card" style="padding:10px 14px;margin-bottom:8px;border-left:4px solid '+((a.due&&a.due<now)?'#f87171':(a.due&&a.due-now<86400?'#fbbf24':'var(--accent)'))+'">'+
       '<div style="font-weight:600;font-size:.92em">'+esc(a.name)+'</div>'+
       '<div style="color:var(--muted);font-size:.8em">'+esc(a.course)+'</div>'+
-      badge(a)+'</div>'; });
+      badge(a)+
+      (a.url?'<div style="margin-top:6px"><a class="link-btn" style="display:inline-block;padding:5px 12px;border-radius:8px;background:var(--accent);color:#fff;font-size:.8em;text-decoration:none" href="'+esc(a.url)+'" target="_blank" rel="noopener">📄 buka tugas</a></div>':'')+
+      '</div>'; });
     $('view').innerHTML=html;
   }
 };

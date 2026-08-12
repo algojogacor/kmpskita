@@ -194,6 +194,14 @@ POST /auth/reset-password   (header: Authorization: Bearer <JWT>)
   stateless, fetch server-side + parse → JSON).
 - Di web: tab **📋 Tugas** pakai `localStorage['kk_moodle_cal']` (URL kalender
   yang ditempel user) → render deadline: LEWAT / SEBENTAR / H-x.
+- **Detail tugas**: feed iCal hanya berisi judul (DESCRIPTION event kosong —
+  tugas HEBAT memang tanpa deskripsi, isi cuma judul+tanggal+status). Detail
+  yang bisa diambil (status kumpul, file, tanggal buka) hanya via halaman
+  tugas dengan sesi login. Di web: tombol **📄 buka tugas** dari
+  `hebat-links.json` (map nama tugas → URL, **course-global**, bukan data
+  pribadi — status/submission milik user TIDAK masuk repo publik). Refresh:
+  `node scripts/sync-hebat.mjs` (WebBridge, butuh Chrome login HE-BAT) lalu
+  push. Personal check: `mod/assign/view.php?id=<cmid>` pakai sesi sendiri.
 - Temuan minor: error webservice bocor **stacktrace path server**
   (`/public/lib/...`) + `reproductionlink` — info disclosure kecil.
 

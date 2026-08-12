@@ -1,0 +1,14 @@
+{
+  "generated": "2026-08-12",
+  "note": "Map nama tugas -> URL halaman tugas HE-BAT. Course-global (URL sama untuk semua mahasiswa di kelas itu), BUKAN data pribadi. Refresh: scripts/sync-hebat.mjs (WebBridge) lalu push.",
+  "tasks": [
+    {
+      "name": "Assessment HAM",
+      "url": "https://hebat.elearning.unair.ac.id/mod/assign/view.php?id=102514"
+    },
+    {
+      "name": "Pengumpulan Tugas Resume Buku PIH Prof Peter Bab I",
+      "url": "https://hebat.elearning.unair.ac.id/mod/assign/view.php?id=107438"
+    }
+  ]
+}
