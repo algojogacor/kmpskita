@@ -194,14 +194,33 @@ POST /auth/reset-password   (header: Authorization: Bearer <JWT>)
   stateless, fetch server-side + parse → JSON).
 - Di web: tab **📋 Tugas** pakai `localStorage['kk_moodle_cal']` (URL kalender
   yang ditempel user) → render deadline: LEWAT / SEBENTAR / H-x.
-- **Detail tugas**: feed iCal hanya berisi judul (DESCRIPTION event kosong —
-  tugas HEBAT memang tanpa deskripsi, isi cuma judul+tanggal+status). Detail
-  yang bisa diambil (status kumpul, file, tanggal buka) hanya via halaman
-  tugas dengan sesi login. Di web: tombol **📄 buka tugas** dari
-  `hebat-links.json` (map nama tugas → URL, **course-global**, bukan data
-  pribadi — status/submission milik user TIDAK masuk repo publik). Refresh:
-  `node scripts/sync-hebat.mjs` (WebBridge, butuh Chrome login HE-BAT) lalu
-  push. Personal check: `mod/assign/view.php?id=<cmid>` pakai sesi sendiri.
+- **Detail tugas**: halaman tugas HEBAT memang tanpa deskripsi, TAPI **halaman
+  KURSUS** (`course/view.php?id=<courseid>`) memuatnya: section summary berisi
+  instruksi penugasan lengkap (ketentuan, pertanyaan, deadline) + semua
+  aktivitas (materi URL/file, tugas). Contoh: Assessment HAM = section
+  "11 Agustus 2026: Assessment HAM" di course 16332 memuat instruksi
+  self-study lengkap (5 pertanyaan, ketentuan pengumpulan); PIH (16319) tidak
+  punya summary; PHI (16495) punya info perkuliahan gabungan.
+- **`hebat-links.json` v2** (generated oleh `scripts/sync-hebat.mjs`):
+  - `courses[]`: `{id, period, code, name, class, url, sections[]}`; tiap
+    section = `{name, summary (isi penugasan, paragraf dosen dipertahankan),
+    activities: [{mod, href, name}]}`. Course-global, bukan data pribadi —
+    status kumpul/file milik user TIDAK masuk repo publik. Catatan: summary
+    adalah konten dosen — keputusan user agar tampil di web.
+  - `tasks[]`: index `{name, url, courseId}` utk mencocokkan feed iCal.
+  - Crawl: daftar kursus via **AJAX Moodle**
+    (`lib/ajax/service.php?sesskey=…&info=core_course_get_enrolled_courses_by_timeline_classification`
+    — method yang dipakai /my/courses.php sendiri; /my/courses.php me-render
+    kartu kursus secara LAZY, tab background tak pernah memuat kartunya;
+    `core_course_get_contents` tidak diaktifkan di HEBAT → section & summary
+    di-scrape dari DOM halaman kursus (server-rendered:
+    `li.section.course-section > .section-item`; buang elemen UI: tombol
+    Collapse/Expand, select, `.bulkselect`, label "Select section …").
+  - Di web: kartu tugas punya **📄 buka tugas**, **🏛 buka kursus**, dan
+    **📝 isi penugasan / info** (details — summary section kursus).
+  - Refresh: `node scripts/sync-hebat.mjs` (WebBridge, butuh Chrome login
+    HE-BAT) lalu push. Personal check (status kumpul/file): halaman tugas
+    `mod/assign/view.php?id=<cmid>` pakai sesi sendiri.
 - Temuan minor: error webservice bocor **stacktrace path server**
   (`/public/lib/...`) + `reproductionlink` — info disclosure kecil.
 

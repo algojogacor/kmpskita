@@ -1,14 +1,142 @@
 {
   "generated": "2026-08-12",
-  "note": "Map nama tugas -> URL halaman tugas HE-BAT. Course-global (URL sama untuk semua mahasiswa di kelas itu), BUKAN data pribadi. Refresh: scripts/sync-hebat.mjs (WebBridge) lalu push.",
+  "note": "Peta kursus + tugas HE-BAT. Course-global (URL & isi sama untuk semua mahasiswa di kelas itu), BUKAN data pribadi — status kumpul/file milik user TIDAK ada di sini. courses[].sections[].summary = isi penugasan/info dari halaman kursus (paragraf dosen dipertahankan). Refresh: node scripts/sync-hebat.mjs (WebBridge: AJAX daftar kursus + crawl halaman kursus; butuh Chrome login HE-BAT) lalu push.",
+  "courses": [
+    {
+      "id": 16319,
+      "period": "2026Ganjil",
+      "code": "FHK25601001",
+      "name": "Pengantar Ilmu Hukum",
+      "class": "C-2",
+      "url": "https://hebat.elearning.unair.ac.id/course/view.php?id=16319",
+      "sections": [
+        {
+          "name": "Pertemuan 2: Hakikat Ilmu Hukum_Dr. Soelistyowati_Rabu 12 Agustus 2026",
+          "summary": "",
+          "activities": [
+            {
+              "mod": "assign",
+              "href": "https://hebat.elearning.unair.ac.id/mod/assign/view.php?id=107438",
+              "name": "Pengumpulan Tugas Resume Buku PIH Prof Peter Bab I"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 16495,
+      "period": "2026Ganjil",
+      "code": "FHK25601002",
+      "name": "Pengantar Hukum  Indonesia",
+      "class": "A-2",
+      "url": "https://hebat.elearning.unair.ac.id/course/view.php?id=16495",
+      "sections": [
+        {
+          "name": "Pertemuan 1: Kuliah Umum_Prof. Dr. Sri Hajati, S.H., M.S._Selasa 11 Agustus 2026",
+          "summary": "Perkuliahan PHI, Selasa 11 Agustus 2026 pukul 07.30 - 09.00 WIB Dilaksanakan secara gabungan kelas A1 + A2 + A3 di Aula Fakultas Hukum UNAIR lantai 12.",
+          "activities": []
+        }
+      ]
+    },
+    {
+      "id": 16390,
+      "period": "2026Ganjil",
+      "code": "FHK25601003",
+      "name": "Ilmu Negara",
+      "class": "C-2",
+      "url": "https://hebat.elearning.unair.ac.id/course/view.php?id=16390",
+      "sections": [
+        {
+          "name": "New section",
+          "summary": "",
+          "activities": [
+            {
+              "mod": "resource",
+              "href": "https://hebat.elearning.unair.ac.id/mod/resource/view.php?id=108313",
+              "name": "PENGANTAR IN"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 16332,
+      "period": "2026Ganjil",
+      "code": "FHK25601032",
+      "name": "Hak Asasi Manusia",
+      "class": "A-2",
+      "url": "https://hebat.elearning.unair.ac.id/course/view.php?id=16332",
+      "sections": [
+        {
+          "name": "11 Agustus 2026: Assessment HAM",
+          "summary": "Mahasiswa yang saya hormati,\nPada pertemuan kali ini, kelas dilaksanakan dalam format self-study. Oleh karena itu, mahasiswa tidak perlu mengikuti perkuliahan secara tatap muka. Sebagai bagian dari kegiatan pembelajaran mandiri, mahasiswa diminta untuk mempelajari materi pengantar mengenai Hak Asasi Manusia (HAM) melalui dua video yang telah disediakan.\nA. Ketentuan Self-Study\nSilakan melakukan pembelajaran secara mandiri dengan mengikuti langkah-langkah berikut:\nTonton dan simak dengan baik kedua video yang telah disediakan:\nThe Story of Human Rights\nWhat Are Human Rights?\nMahasiswa diperkenankan untuk menonton video lain selain yang disediakan, dan sertakan referensi video tersebut dalam jawaban tugas.\nSetelah menonton video, jawab pertanyaan-pertanyaan yang telah disediakan berdasarkan pemahaman Anda terhadap video dan pengetahuan awal yang Anda miliki mengenai HAM.\nJawaban harus ditulis dengan menggunakan bahasa dan pemahaman Anda sendiri. Hindari sekadar menyalin isi video atau sumber lain.\nGunakan kegiatan ini sebagai kesempatan untuk mengidentifikasi sejauh mana pemahaman awal Anda mengenai konsep HAM. Tidak perlu khawatir apabila belum dapat menjawab secara sempurna, karena tugas ini merupakan bagian dari initial assessment sebelum kita memasuki pembahasan HAM secara lebih mendalam.\nPertanyaan:\na. Setelah menonton kedua video, bagaimana Anda mendefinisikan HAM dengan bahasa Anda sendiri?\nb. Apa perbedaan antara HAM, hak warga negara, dan hak konstitusional? Berikan masing-masing satu contoh.\nc. Apakah sejarah perkembangan HAM menunjukkan bahwa HAM benar-benar bersifat universal, atau justru merupakan hasil perkembangan sosial dan politik tertentu? Jelaskan.\nd. Ketika kepentingan negara bertentangan dengan hak individu, mana yang seharusnya diprioritaskan? Apakah jawabannya selalu sama dalam setiap keadaan?\ne. Sebelum mengikuti mata kuliah HAM, apa yang Anda pahami tentang istilah “HAM”? Setelah menonton kedua video, apa pemahaman Anda yang berubah atau menjadi lebih jelas?\nB. Ketentuan Pengumpulan\nFormat file: Microsoft Word (.doc/.docx)\nMedia pengumpulan: HEBAT – Assessment HAM\nDeadline: Jumat, 14 Agustus 2026, pukul 12.00 WIB\nPastikan file telah berhasil terunggah sebelum batas waktu yang ditentukan.\nPengumpulan tugas dihitung sebagai komponen nilai 5%\nC. Catatan\nKegiatan ini bukan sekadar untuk menguji kemampuan mengingat isi video, tetapi untuk mengetahui bagaimana Anda memahami, mempertanyakan, dan melihat persoalan HAM dari perspektif mahasiswa Fakultas Hukum.\nSilakan mengerjakan secara mandiri dan gunakan kesempatan ini untuk mulai membangun pemahaman kritis mengenai apa itu HAM, mengapa HAM penting, dan bagaimana HAM berkaitan dengan hukum serta kehidupan bernegara.\nSelamat belajar dan selamat melakukan self-study.",
+          "activities": [
+            {
+              "mod": "url",
+              "href": "https://hebat.elearning.unair.ac.id/mod/url/view.php?id=102489",
+              "name": "the story of human rights"
+            },
+            {
+              "mod": "assign",
+              "href": "https://hebat.elearning.unair.ac.id/mod/assign/view.php?id=102514",
+              "name": "Assessment HAM"
+            },
+            {
+              "mod": "url",
+              "href": "https://hebat.elearning.unair.ac.id/mod/url/view.php?id=102569",
+              "name": "what are human rights"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 19029,
+      "period": "2026Ganjil",
+      "code": "UAK25000001",
+      "name": "Agama Islam 1",
+      "class": "PDB93",
+      "url": "https://hebat.elearning.unair.ac.id/course/view.php?id=19029",
+      "sections": []
+    },
+    {
+      "id": 18971,
+      "period": "2026Ganjil",
+      "code": "UAK25000007",
+      "name": "Pancasila",
+      "class": "PDB93",
+      "url": "https://hebat.elearning.unair.ac.id/course/view.php?id=18971",
+      "sections": []
+    },
+    {
+      "id": 19167,
+      "period": "2026Ganjil",
+      "code": "UAK25000008",
+      "name": "Kewarganegaraan",
+      "class": "PDB93",
+      "url": "https://hebat.elearning.unair.ac.id/course/view.php?id=19167",
+      "sections": []
+    },
+    {
+      "id": 19185,
+      "period": "2026Ganjil",
+      "code": "UAK25000009",
+      "name": "Bahasa Indonesia",
+      "class": "PDB93",
+      "url": "https://hebat.elearning.unair.ac.id/course/view.php?id=19185",
+      "sections": []
+    }
+  ],
   "tasks": [
     {
       "name": "Assessment HAM",
-      "url": "https://hebat.elearning.unair.ac.id/mod/assign/view.php?id=102514"
+      "url": "https://hebat.elearning.unair.ac.id/mod/assign/view.php?id=102514",
+      "courseId": 16332
     },
     {
       "name": "Pengumpulan Tugas Resume Buku PIH Prof Peter Bab I",
-      "url": "https://hebat.elearning.unair.ac.id/mod/assign/view.php?id=107438"
+      "url": "https://hebat.elearning.unair.ac.id/mod/assign/view.php?id=107438",
+      "courseId": 16319
     }
   ]
 }

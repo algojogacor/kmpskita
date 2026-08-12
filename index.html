@@ -268,11 +268,28 @@ const VIEWS={
     let evs=[];
     try{ evs=await moodleCalFetch(); }
     catch(e){ $('view').innerHTML=moodleCalForm(e.message); return; }
-    let links={tasks:[]};
+    let links={tasks:[],courses:[]};
     try{ links=await (await fetch('hebat-links.json')).json(); }catch(e){}
+    // indeks dari hebat-links.json: aktivitas -> kursus/section; nama -> url; id kursus
+    const actByUrl={}, actByName={};
+    (links.courses||[]).forEach(c=>(c.sections||[]).forEach(s=>(s.activities||[]).forEach(a=>{
+      actByUrl[a.href]=actByUrl[a.href]||{course:c,section:s,act:a};
+      actByName[(a.name||'').toLowerCase()]=actByUrl[a.href];
+    })));
     const linkFor=n=>{ const nl=n.toLowerCase(); return (links.tasks||[]).find(t=>{ const tn=t.name.toLowerCase(); return tn===nl||tn.includes(nl)||nl.includes(tn); }); };
     const list=evs.filter(e=>(e.SUMMARY||'').toLowerCase().includes('due'))
-      .map(e=>({name:cleanName(e.SUMMARY),course:courseName(e.CATEGORIES),due:icsDate(e.DTSTART),url:(linkFor(cleanName(e.SUMMARY))||{}).url||''}));
+      .map(e=>{
+        const name=cleanName(e.SUMMARY);
+        const lf=linkFor(name);
+        const hit=(lf&&lf.url)?(actByUrl[lf.url]||null):(actByName[name.toLowerCase()]||null);
+        const course=hit?hit.course:null;
+        return {name,
+          courseName:course?course.name:courseName(e.CATEGORIES),
+          courseClass:course?(course.class||''):'',
+          due:icsDate(e.DTSTART),
+          url:(lf&&lf.url)||(hit?hit.act.href:''),
+          hit};
+      });
     list.sort((a,b)=>a.due-b.due);
     const badge=a=>{
       if(!a.due) return '<span style="color:var(--muted);font-size:.75em">tanpa tanggal</span>';
@@ -281,15 +298,29 @@ const VIEWS={
       if(left<86400) return '<b style="color:#fbbf24">SEBENTAR '+fmtTS(a.due)+'</b>';
       return '<span style="color:var(--muted);font-size:.82em">H-'+Math.ceil(left/86400)+' · '+fmtTS(a.due)+'</span>';
     };
+    const btnStyle='display:inline-block;padding:5px 12px;border-radius:8px;font-size:.8em;text-decoration:none;margin-right:6px';
+    const btns=a=>{
+      let b='';
+      if(a.url) b+='<a class="link-btn" style="'+btnStyle+'background:var(--accent);color:#fff" href="'+esc(a.url)+'" target="_blank" rel="noopener">📄 buka tugas</a>';
+      if(a.courseName&&a.hit&&a.hit.course) b+='<a class="link-btn" style="'+btnStyle+'background:transparent;border:1px solid var(--accent);color:var(--accent)" href="'+esc(a.hit.course.url)+'" target="_blank" rel="noopener">🏛 buka kursus</a>';
+      return b;
+    };
+    const detail=a=>{
+      if(!a.hit||!a.hit.section||!a.hit.section.summary) return '';
+      return '<details style="margin-top:8px;font-size:.82em"><summary style="cursor:pointer;color:var(--accent)">📝 isi penugasan / info</summary>'+
+        (a.hit.section.name?'<div style="margin-top:6px;font-weight:600;color:var(--fg)">'+esc(a.hit.section.name)+'</div>':'')+
+        '<div style="margin-top:4px;white-space:pre-wrap;line-height:1.5;color:var(--muted)">'+esc(a.hit.section.summary)+'</div></details>';
+    };
     let html='<div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div class="hdr" style="margin:0">Tugas & Deadline</div>'+
       '<span style="font-size:.75em;color:var(--muted)"><a href="https://hebat.elearning.unair.ac.id/" target="_blank" rel="noopener">buka HE-BAT</a> · <a href="javascript:moodleCalLogout()">ganti kalender</a></span></div>';
     if(!list.length) html+='<div class="empty">tidak ada tugas ber-deadline di kalender HE-BAT</div>';
     list.forEach(a=>{ html+='<div class="card" style="padding:10px 14px;margin-bottom:8px;border-left:4px solid '+((a.due&&a.due<now)?'#f87171':(a.due&&a.due-now<86400?'#fbbf24':'var(--accent)'))+'">'+
       '<div style="font-weight:600;font-size:.92em">'+esc(a.name)+'</div>'+
-      '<div style="color:var(--muted);font-size:.8em">'+esc(a.course)+'</div>'+
+      '<div style="color:var(--muted);font-size:.8em">'+esc(a.courseName)+(a.courseClass?' · '+esc(a.courseClass):'')+'</div>'+
       badge(a)+
-      (a.url?'<div style="margin-top:6px"><a class="link-btn" style="display:inline-block;padding:5px 12px;border-radius:8px;background:var(--accent);color:#fff;font-size:.8em;text-decoration:none" href="'+esc(a.url)+'" target="_blank" rel="noopener">📄 buka tugas</a></div>':'')+
+      (btns(a)?'<div style="margin-top:6px">'+btns(a)+'</div>':'')+
+      detail(a)+
       '</div>'; });
     $('view').innerHTML=html;
   }

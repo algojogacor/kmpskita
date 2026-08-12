@@ -48,10 +48,17 @@ yang bisa dibaca web ini:
 Selesai — deadline tugas muncul tanpa perlu login HE-BAT lagi. URL kalender
 itu berisi kunci khusus akunmu, jadi jangan dibagikan ke orang lain.
 
-Di tiap tugas ada tombol **📄 buka tugas** → langsung ke halaman tugas di
-HE-BAT (di sana ada status kumpul, file, dan tempat mengumpulkan). Tombol ini
-hanya muncul untuk tugas yang sudah terdaftar di `hebat-links.json`; kalau ada
-tugas baru yang belum ada tombolnya, beri tahu pemilik repo untuk sync.
+Di tiap tugas ada:
+- **📄 buka tugas** → halaman tugas di HE-BAT (status kumpul, file, tempat
+  mengumpulkan).
+- **🏛 buka kursus** → halaman kursus (materi + semua aktivitas).
+- **📝 isi penugasan / info** → ketuk untuk membuka detail instruksi
+  penugasannya (diambil dari halaman kursus) — tampil untuk tugas yang
+  dosennya menuliskan instruksi di kursus.
+
+Tombol & detail ini muncul untuk data yang sudah terdaftar di
+`hebat-links.json`; kalau ada tugas baru yang belum muncul, beri tahu pemilik
+repo untuk sync.
 
 ## Kalau ada masalah
 
