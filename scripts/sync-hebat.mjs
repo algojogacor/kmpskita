@@ -143,3 +143,22 @@ writeFileSync(linksFile, JSON.stringify(out, null, 2) + '\n');
 console.log(`hebat-links.json: ${courses.length} kursus, ${tasks.length} tugas (baru: ${added})`);
 for (const t of tasks) console.log('-', t.name, '->', t.url);
 await cmd('close_tab', {});
+
+// --push: commit + push hebat-links.json otomatis (satu perintah refresh penuh)
+if (process.argv.includes('--push')) {
+  const { execFileSync } = await import('child_process');
+  const root = resolve(here, '..');
+  const git = (...args) => execFileSync('git', args, { cwd: root, stdio: 'inherit', encoding: 'utf8' });
+  try {
+    const changed = execFileSync('git', ['status', '--porcelain', '--', 'hebat-links.json'], { cwd: root, encoding: 'utf8' }).trim();
+    if (!changed) { console.log('tidak ada perubahan — commit/push dilewati.'); }
+    else {
+      git('add', 'hebat-links.json');
+      git('commit', '-m', 'sync hebat-links.json (otomatis)');
+      git('push');
+      console.log('pushed ke repo.');
+    }
+  } catch (e) {
+    console.error('push gagal — jalankan manual:', (e.message || '').split('\n')[0]);
+  }
+}
