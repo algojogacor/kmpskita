@@ -1,7 +1,9 @@
-// KK Lite service worker — cache statis minimal (halaman tetap buka offline)
-const C = 'kk-lite-v1';
+// KK Lite service worker — v2
+// HTML: network-first (deploy baru langsung terlihat, fallback cache offline)
+// Aset lain: cache-first. API (origin lain): selalu jaringan.
+const C = 'kk-lite-v2';
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(C).then(c => c.addAll(['./', './manifest.json'])));
+  e.waitUntil(caches.open(C).then(c => c.addAll(['./manifest.json'])));
   self.skipWaiting();
 });
 self.addEventListener('activate', e => {
@@ -12,5 +14,14 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const u = new URL(e.request.url);
   if (u.origin !== location.origin) return; // API: selalu jaringan
+  const isNav = e.request.mode === 'navigate';
+  if (isNav) {
+    e.respondWith(fetch(e.request).then(r => {
+      const cp = r.clone();
+      caches.open(C).then(c => c.put('./', cp));
+      return r;
+    }).catch(() => caches.match('./')));
+    return;
+  }
   e.respondWith(caches.match(e.request).then(m => m || fetch(e.request)));
 });
