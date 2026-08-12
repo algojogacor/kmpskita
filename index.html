@@ -65,6 +65,7 @@ a{color:var(--accent)}
   <button data-v="tugas"><span class="ic">📋</span>Tugas</button>
   <button data-v="status"><span class="ic">🎓</span>Status</button>
   <button data-v="elearn"><span class="ic">💻</span>E-Learning</button>
+  <button data-v="panduan"><span class="ic">💡</span>Panduan</button>
 </nav>
 <script>
 const BASE='https://apikampuskita-mahasiswa.unair.ac.id';
@@ -143,7 +144,8 @@ function setupView(){
     '<div class="mk" style="margin-top:10px">🔑 Sudah punya token?</div>'+
     '<input id="tok" type="password" placeholder="paste JWT / token di sini" autocomplete="off">'+
     '<button onclick="saveTok()">Simpan Token</button>'+
-    '<div class="hint">Token cuma disimpan di perangkat ini (localStorage). Login lewat server Vercel hanya untuk meneruskan — tidak ada yang disimpan.</div></div>';
+    '<div class="hint">Token cuma disimpan di perangkat ini (localStorage). Login lewat server Vercel hanya untuk meneruskan — tidak ada yang disimpan.</div>'+
+    '<div class="hint" style="text-align:center;opacity:.7;margin-top:10px">Bingung? buka tab <b>💡 Panduan</b> untuk tutorial lengkap.</div></div>';
 }
 function saveTok(){
   const v=$('tok').value.trim();
@@ -356,6 +358,44 @@ const VIEWS={
     }
     $('view').innerHTML=html;
     if(uid&&!hasOwn) initGenHelp();
+  },
+  panduan:async()=>{
+    const s=(t,h)=>'<details class="card" style="padding:12px 14px;margin-bottom:8px"><summary style="cursor:pointer;font-weight:600">'+t+'</summary>'+h+'</details>';
+    $('view').innerHTML=
+      '<div class="hdr">💡 Panduan & Cara Pakai</div>'+
+      '<div class="hint" style="margin:6px 0 12px">KK Lite = satu aplikasi untuk dua sistem UNAIR: <b>Kampus Kita</b> (jadwal, presensi, nilai, status) dan <b>HE-BAT</b> (tugas & e-learning). Semua data yang tampil = <b>akunmu sendiri</b>.</div>'+
+      s('🔐 1. Masuk (akun Kampus Kita)',
+        '<ol style="margin:6px 0 4px 20px;line-height:1.8">'+
+        '<li>Ketik <b>email kampus</b> (<i>nama@student.unair.ac.id</i>) dan <b>password Kampus Kita</b> — bukan NIM.</li>'+
+        '<li>Klik <b>Masuk</b>. Token tersimpan aman di perangkatmu.</li>'+
+        '<li>Ganti akun: tombol <b>⏻</b> di pojok kanan atas.</li></ol>'+
+        '<div class="hint">Jadwal, presensi, dan nilai sama persis dengan aplikasi resmi Kampus Kita.</div>')+
+      s('📋 2. Tugas HE-BAT (URL kalender pribadi)',
+        '<ol style="margin:6px 0 4px 20px;line-height:1.8">'+
+        '<li>Buka <b>hebat.elearning.unair.ac.id</b> → login.</li>'+
+        '<li>Buka <b>Calendar → Import or export calendars</b> (menu kiri / ikon kalender).</li>'+
+        '<li>Klik tombol <b>Get calendar URL</b> → salin URL yang muncul.</li>'+
+        '<li>Kembali ke web ini → tab <b>📋 Tugas</b> → tempel URL → <b>Simpan Kalender HE-BAT</b>.</li></ol>'+
+        '<div class="hint">URL itu berisi <b>kunci khusus akunmu</b> — jangan dibagikan ke siapa pun. Cukup sekali; deadline muncul otomatis tanpa login HE-BAT lagi.</div>')+
+      s('✨ 3. Tombol tugas (📄 buka tugas · 🏛 buka kursus · 📝 isi penugasan)',
+        '<div class="hint" style="line-height:1.8">Tombol muncul kalau data untuk akunmu ada. Kalau belum, tab <b>📋 Tugas</b> menampilkan bagian <b>“buat tombolmu”</b>:</div>'+
+        '<ol style="margin:6px 0 4px 20px;line-height:1.8">'+
+        '<li>Buka <b>hebat.elearning.unair.ac.id</b> (login) → tekan <b>F12</b> → tab <b>Console</b> → kalau muncul peringatan, ketik <b>allow pasting</b> lalu Enter.</li>'+
+        '<li>Salin kode dari bagian “buat tombolmu” → tempel di Console → Enter. File <b>hebat-links-…json</b> terunduh.</li>'+
+        '<li>Seret file itu ke kotak di tab <b>📋 Tugas</b>. Tombol muncul ±1 menit kemudian (muat ulang halamannya).</li></ol>'+
+        '<div class="hint">Data dibuat di <b>browser kamu</b> (sesi login HE-BAT kamu) — tidak ada password yang melewati web ini.</div>')+
+      s('🛠 4. Kalau ada masalah',
+        '<div class="hint" style="line-height:1.8">'+
+        '• <b>“HTTP 0” / timeout saat masuk</b> → server Kampus Kita memblokir WiFi rumah. Ganti ke <b>data seluler / USB tethering HP</b>.<br>'+
+        '• <b>“email dan password wajib”</b> → email harus <b>@student.unair.ac.id</b> sesuai akun Kampus Kita.<br>'+
+        '• <b>Tugas tidak muncul</b> → periksa URL kalender masih valid (ambil ulang kalau perlu), lalu muat ulang halaman.<br>'+
+        '• <b>Tombol tidak muncul</b> → data akunmu belum ada atau kelasnya berbeda; ikuti langkah 3.<br>'+
+        '• <b>Mau ganti akun</b> → tombol <b>⏻</b>, lalu login ulang.</div>')+
+      s('🔒 5. Privasi & keamanan',
+        '<div class="hint" style="line-height:1.8">'+
+        '• Semua data = <b>akunmu sendiri</b>. Token Kampus Kita & URL kalender tersimpan hanya di perangkatmu (localStorage).<br>'+
+        '• <b>Jangan bagikan</b> URL kalender HE-BAT (kunci akses) atau token ke siapa pun.<br>'+
+        '• Data tombol di repo publik hanya berisi info kursus & tugas (konten dosen) — <b>bukan</b> nilai, status kumpul, atau data pribadi.</div>');
   }
 };
 document.querySelectorAll('nav button').forEach(b=>b.onclick=async()=>{
