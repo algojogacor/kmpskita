@@ -221,6 +221,13 @@ POST /auth/reset-password   (header: Authorization: Bearer <JWT>)
   - Refresh: `node scripts/sync-hebat.mjs` (WebBridge, butuh Chrome login
     HE-BAT) lalu push. Personal check (status kumpul/file): halaman tugas
     `mod/assign/view.php?id=<cmid>` pakai sesi sendiri.
+  - **Multi-user (fakultas/kelas lain)**: script menulis `hebat-links.json`
+    + salinan `hebat-links-<userid>.json` (userid dari link profil di header).
+    Di web, tab Tugas memilih file sesuai userid di URL kalender yang
+    ditempel, fallback ke `hebat-links.json`. Mahasiswa lain cukup menjalankan
+    sync di Chrome/akun HE-BAT mereka sendiri (data = course instance mereka;
+    guard kelas tetap aktif). sw.js mengecualikan semua `hebat-links*.json`
+    dari cache-first.
 - Temuan minor: error webservice bocor **stacktrace path server**
   (`/public/lib/...`) + `reproductionlink` — info disclosure kecil.
 

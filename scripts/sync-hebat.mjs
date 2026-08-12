@@ -95,6 +95,16 @@ const list = await waitCourseList();
 if (!Array.isArray(list)) throw new Error('gagal ambil daftar kursus: ' + JSON.stringify(list));
 console.log(`kursus terdaftar (AJAX): ${list.length}`);
 
+// userid (dari link profil di header) -> nama file per-user hebat-links-<id>.json,
+// supaya mahasiswa fakultas/kelas lain bisa punya data sendiri di repo yg sama.
+const USERID_CODE = `(() => { const a = document.querySelector('a[href*="user/profile.php?id="]'); if (!a) return ''; const m = (a.getAttribute('href') || '').match(/id=(\\d+)/); return m ? m[1] : ''; })()`;
+let userId = '';
+for (let i = 0; i < 10 && !userId; i++) {
+  userId = (await cmd('evaluate', { code: USERID_CODE })).value;
+  if (!userId) await sleep(1000);
+}
+if (userId) console.log(`userid: ${userId} (file: hebat-links-${userId}.json)`);
+
 const courses = [];
 for (const c of list) {
   await cmd('navigate', { url: `${BASE}/course/view.php?id=${c.id}` });
@@ -140,6 +150,11 @@ tasks.sort((a, b) => a.name.localeCompare(b.name, 'id'));
 
 const out = { generated: new Date().toISOString().slice(0, 10), note: cur.note, courses, tasks };
 writeFileSync(linksFile, JSON.stringify(out, null, 2) + '\n');
+// Salinan per-user (hebat-links-<userid>.json): app memilihnya berdasarkan
+// userid di URL kalender pengguna -> mahasiswa fakultas/kelas lain yang
+// menjalankan sync di akunnya sendiri dapat data tombol yg benar utk dirinya.
+const userFile = userId ? resolve(here, `../hebat-links-${userId}.json`) : null;
+if (userFile) writeFileSync(userFile, JSON.stringify(out, null, 2) + '\n');
 console.log(`hebat-links.json: ${courses.length} kursus, ${tasks.length} tugas (baru: ${added})`);
 for (const t of tasks) console.log('-', t.name, '->', t.url);
 await cmd('close_tab', {});
@@ -150,10 +165,12 @@ if (process.argv.includes('--push')) {
   const root = resolve(here, '..');
   const git = (...args) => execFileSync('git', args, { cwd: root, stdio: 'inherit', encoding: 'utf8' });
   try {
-    const changed = execFileSync('git', ['status', '--porcelain', '--', 'hebat-links.json'], { cwd: root, encoding: 'utf8' }).trim();
+    const paths = ['hebat-links.json'];
+    if (userFile) paths.push(`hebat-links-${userId}.json`);
+    const changed = execFileSync('git', ['status', '--porcelain', '--', ...paths], { cwd: root, encoding: 'utf8' }).trim();
     if (!changed) { console.log('tidak ada perubahan — commit/push dilewati.'); }
     else {
-      git('add', 'hebat-links.json');
+      git('add', ...paths);
       git('commit', '-m', 'sync hebat-links.json (otomatis)');
       git('push');
       console.log('pushed ke repo.');

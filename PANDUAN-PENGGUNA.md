@@ -57,8 +57,12 @@ Di tiap tugas ada:
   dosennya menuliskan instruksi di kursus.
 
 Tombol & detail ini muncul untuk data yang sudah terdaftar di
-`hebat-links.json`; kalau ada tugas baru yang belum muncul, beri tahu pemilik
-repo untuk sync.
+`hebat-links.json` (milik pemilik repo). Web ini memilih file **per-user**
+(`hebat-links-<userid>.json`, userid dari URL kalender) kalau ada — jadi
+mahasiswa fakultas/kelas lain yang menjalankan sync di akunnya sendiri juga
+dapat tombol yang benar. Tanpa file sendiri, tampil kartu tugas & deadline
+(tetap berfungsi) tanpa tombol. Kalau ada tugas baru yang belum muncul, beri
+tahu pemilik repo untuk sync.
 
 ## Kalau ada masalah
 

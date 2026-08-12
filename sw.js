@@ -15,7 +15,7 @@ self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (u.origin !== location.origin) return; // API origin lain: selalu jaringan
   if (u.pathname.startsWith('/api/')) return; // serverless (login, moodle-cal): selalu jaringan
-  if (u.pathname.endsWith('hebat-links.json')) return; // data link tugas: selalu segar
+  if (u.pathname.startsWith('/hebat-links') && u.pathname.endsWith('.json')) return; // data link tugas (termasuk per-user): selalu segar
   const isNav = e.request.mode === 'navigate';
   if (isNav) {
     e.respondWith(fetch(e.request).then(r => {

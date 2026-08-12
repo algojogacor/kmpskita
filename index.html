@@ -269,7 +269,12 @@ const VIEWS={
     try{ evs=await moodleCalFetch(); }
     catch(e){ $('view').innerHTML=moodleCalForm(e.message); return; }
     let links={tasks:[],courses:[]};
-    try{ links=await (await fetch('hebat-links.json')).json(); }catch(e){}
+    // Data per-user (hebat-links-<userid>.json) bila ada: userid dari URL
+    // kalender -> mahasiswa fakultas/kelas lain bisa punya file sendiri.
+    // Fallback: hebat-links.json (data pemilik) utk pengguna tanpa file.
+    const uid=(moodleCalParts(getMoodleCal())||{}).userid||'';
+    try{ links=await (await fetch('hebat-links'+(uid?'-'+uid:'')+'.json')).json(); }
+    catch(e){ if(uid) try{ links=await (await fetch('hebat-links.json')).json(); }catch(e2){} }
     // indeks dari hebat-links.json: aktivitas -> kursus/section; nama -> url; id kursus
     const actByUrl={}, actByName={};
     (links.courses||[]).forEach(c=>(c.sections||[]).forEach(s=>(s.activities||[]).forEach(a=>{
