@@ -228,6 +228,22 @@ POST /auth/reset-password   (header: Authorization: Bearer <JWT>)
     sync di Chrome/akun HE-BAT mereka sendiri (data = course instance mereka;
     guard kelas tetap aktif). sw.js mengecualikan semua `hebat-links*.json`
     dari cache-first.
+  - **Jalur tanpa install untuk mahasiswa lain** (`generator-hebat.js` +
+    `api/links-upload.js`): generator berjalan di KONSOLE browser pengguna
+    saat mereka di halaman HEBAT (sesi login mereka — kredensial TIDAK pernah
+    transit): AJAX daftar kursus → fetch tiap halaman kursus (same-origin,
+    `new DOMParser().parseFromString`) → ekstrak sections (block-break:
+    sisipkan `\n` di akhir elemen blok — setara innerText tanpa layout) →
+    unduh `hebat-links-<userid>.json`. UI di tab Tugas: bagian "buat
+    tombolmu" (3 langkah, tombol salin kode — isi textarea di-fetch dari
+    `generator-hebat.js` — drop/pilih file). `api/links-upload.js`
+    (serverless): whitelist skema, URL HANYA `hebat.elearning.unair.ac.id`
+    (anti phishing), userid `^\d{4,12}$`, ≤512 KB, rate limit per IP (5/10m)
+    & per userid (3/10m), commit ke GitHub Contents API
+    (`PUT /repos/algojogacor/kmpskita/contents/hebat-links-<uid>.json`,
+    sha utk update) dengan `GITHUB_TOKEN` env (fine-grained PAT scoped ke
+    repo ini, Contents read+write). Tanpa token → 503 ramah. Satu commit →
+    Vercel redeploy → file live ±1 menit.
 - Temuan minor: error webservice bocor **stacktrace path server**
   (`/public/lib/...`) + `reproductionlink` — info disclosure kecil.
 

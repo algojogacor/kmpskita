@@ -59,10 +59,24 @@ Di tiap tugas ada:
 Tombol & detail ini muncul untuk data yang sudah terdaftar di
 `hebat-links.json` (milik pemilik repo). Web ini memilih file **per-user**
 (`hebat-links-<userid>.json`, userid dari URL kalender) kalau ada — jadi
-mahasiswa fakultas/kelas lain yang menjalankan sync di akunnya sendiri juga
-dapat tombol yang benar. Tanpa file sendiri, tampil kartu tugas & deadline
-(tetap berfungsi) tanpa tombol. Kalau ada tugas baru yang belum muncul, beri
-tahu pemilik repo untuk sync.
+mahasiswa fakultas/kelas lain juga dapat tombol yang benar, tanpa perlu
+pemilik repo.
+
+## Buat tombolmu sendiri (untuk fakultas/kelas lain, tanpa install)
+
+Kalau kartu tugasmu belum ada tombolnya, tab **📋 Tugas** menampilkan
+bagian **"✨ belum ada tombol tugas? buat datamu sendiri"**:
+
+1. Buka **hebat.elearning.unair.ac.id** di tab baru (login HE-BAT kamu).
+   Tekan **F12** → tab **Console** (kalau muncul peringatan, ketik
+   `allow pasting` lalu Enter).
+2. Salin kode dari web ini (tombol **📋 salin kode**) → tempel di Console →
+   Enter. File `hebat-links-<userid>.json` terunduh.
+3. Seret file itu ke kotak **"seret file ke sini"** di web ini.
+
+Data dibuat **di browser kamu** (sesi login kamu) — tidak ada password yang
+melewati web ini. Setelah terkirim, tombol muncul ±1 menit kemudian (muat
+ulang halamannya). Semua URL divalidasi hanya `hebat.elearning.unair.ac.id`.
 
 ## Kalau ada masalah
 
