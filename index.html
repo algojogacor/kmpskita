@@ -281,13 +281,19 @@ const VIEWS={
       .map(e=>{
         const name=cleanName(e.SUMMARY);
         const lf=linkFor(name);
-        const hit=(lf&&lf.url)?(actByUrl[lf.url]||null):(actByName[name.toLowerCase()]||null);
+        // hebat-links.json course-global utk instance KELAS ini (id kursus & cmid
+        // beda tiap kelas) -> tombol hanya valid kalau kelas di kalender pengguna
+        // cocok dgn kelas di data sync (kalender berisi fullname: ... - 2025 - A-2).
+        const calCls=((e.CATEGORIES||'').split(' - ').pop()||'').trim();
+        const hit0=(lf&&lf.url)?(actByUrl[lf.url]||null):(actByName[name.toLowerCase()]||null);
+        const clsOk=!hit0||!calCls||!hit0.course||!hit0.course.class||calCls===hit0.course.class;
+        const hit=clsOk?hit0:null;
         const course=hit?hit.course:null;
         return {name,
           courseName:course?course.name:courseName(e.CATEGORIES),
           courseClass:course?(course.class||''):'',
           due:icsDate(e.DTSTART),
-          url:(lf&&lf.url)||(hit?hit.act.href:''),
+          url:clsOk?((hit?hit.act.href:'')||(lf&&lf.url?lf.url:'')):'',
           hit};
       });
     list.sort((a,b)=>a.due-b.due);
