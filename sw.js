@@ -13,7 +13,8 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const u = new URL(e.request.url);
-  if (u.origin !== location.origin) return; // API: selalu jaringan
+  if (u.origin !== location.origin) return; // API origin lain: selalu jaringan
+  if (u.pathname.startsWith('/api/')) return; // serverless (login, moodle-cal): selalu jaringan
   const isNav = e.request.mode === 'navigate';
   if (isNav) {
     e.respondWith(fetch(e.request).then(r => {
