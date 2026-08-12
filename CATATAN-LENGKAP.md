@@ -164,33 +164,46 @@ POST /auth/reset-password   (header: Authorization: Bearer <JWT>)
 ### Kontak resmi (dari binary app, untuk responsible disclosure)
 - `direktorat@ditsi.unair.ac.id` · Telegram resmi: `t.me/ULT_UNAIR`
 
-## HE-BAT (e-Learning UNAIR) — Moodle REST API (terverifikasi 2026-08-12)
+## HE-BAT (e-Learning UNAIR) — Moodle (terverifikasi 2026-08-12)
 
-- Platform **Moodle**, web service REST **AKTIF**: `webservice/rest/server.php` →
-  tanpa token valid balas `invalidtoken` (endpoint jalan).
-- **Login**: NIM + password → `POST /login/token.php` + `service=moodle_mobile`
-  (service **aktif** — kredensial salah → "Invalid login", bukan "service not
-  available") → respons JSON berisi **token di body** (bisa dibaca browser,
-  beda dari JWT Kampus Kita yang di Set-Cookie).
-- **CORS `Access-Control-Allow-Origin: *`** di token.php DAN webservice →
-  browser bisa fetch langsung, **tanpa proxy**.
-- Token disimpan `localStorage['kk_moodle_token']`; tab **📋 Tugas** di web:
-  - `core_enrol_get_users_courses` (userid=0 → kursus sendiri)
-  - `mod_assign_get_assignments` (courseids → daftar tugas + duedate + submissionstatus)
-  - `core_calendar_get_calendar_upcoming_events` (acara mendatang)
-  - format `moodlewsrestformat=json`; error format `{"error":...}`
-- Temuan minor: response error bocor **stacktrace path server** (`/public/lib/...`)
-  + `reproductionlink` — info disclosure kecil.
-- Batas: hanya wsfunction untuk data akun sendiri; jangan sentuh wsfunction
-  admin/grading orang lain.
+### Jalur token webservice: MATI untuk mahasiswa (diteliti tuntas)
+- Web service REST **AKTIF** (`webservice/rest/server.php` balas `invalidtoken`),
+  CORS `*` di token.php + webservice.
+- **`login/token.php` MENOLAK password yang sama yang diterima form web**
+  (NIM maupun email) → "Invalid login". Konfirmasi: web login = form Moodle
+  standar yang diterima untuk **NIM + password** (username = NIM; email juga
+  diterima), tetapi token.php memakai jalur auth yang berbeda (plugin SSO
+  kustom UNAIR tidak meneruskan verifikasi ke token.php).
+- **Preferences → Security keys** (`user/managetoken.php`): halaman KOSONG,
+  menu tidak ada di Preferences → pembuatan token oleh user **dimatikan admin**
+  (capability `moodle/webservice:createtoken` dicabut). `?action=create` juga
+  tidak merender form.
+- Kesimpulan: **token webservice untuk akun mahasiswa tidak bisa dibuat** di
+  HEBAT. jangan dibuang waktu — pakai jalur iCal di bawah.
+
+### Jalur yang DIPAKAI: iCal authtoken (tanpa login, tanpa token webservice)
+- `GET /calendar/export_execute.php?userid=<id>&authtoken=<kunci>&preset_what=all&preset_time=custom&starttime=<unix>&endtime=<unix>`
+- Authtoken didapat dari UI: login web → **Calendar → Import or export
+  calendars → Get calendar URL** → URL berisi `userid` + `authtoken`.
+- **Bisa diakses TANPA sesi login** (diverifikasi dari PC tanpa cookie, HTTP 200).
+  Range `custom` menerima `starttime`/`endtime` unix → satu semester penuh.
+- Isi: event `SUMMARY` = "… is due" (deadline tugas), `CATEGORIES` = nama
+  kursus penuh (folded line, perlu digabung), `DTSTART` = UTC.
+- **TIDAK ada header CORS** di export_execute.php (beda dari webservice) →
+  browser diblokir → butuh proxy serverless `api/moodle-cal.js` (Vercel,
+  stateless, fetch server-side + parse → JSON).
+- Di web: tab **📋 Tugas** pakai `localStorage['kk_moodle_cal']` (URL kalender
+  yang ditempel user) → render deadline: LEWAT / SEBENTAR / H-x.
+- Temuan minor: error webservice bocor **stacktrace path server**
+  (`/public/lib/...`) + `reproductionlink` — info disclosure kecil.
 
 ## Belum dipecahkan
 
 - `/api/auth/login` apicybercampus (token sistem berbeda; semua varian balas
   "Username / password tidak boleh kosong") → submit presensi belum bisa.
 - `unairsatu.unair.ac.id/token/ambil-token-v2` → 500 selalu.
-- E-Learning hebat (SSO UNAIR) tidak dibutuhkan — cukup link
-  `https://hebat.elearning.unair.ac.id/hebat-v2/`.
+- `hebat-v2` (`/hebat-v2/`) ternyata **landing page marketing** saja — tidak ada
+  API sendiri, jangan dijadikan jalur.
 
 ## Batasan & Etika
 

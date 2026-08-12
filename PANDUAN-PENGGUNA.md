@@ -32,7 +32,21 @@ Ini **bukan app resmi UNAIR** — hanya "jendela" ke data akun kamu sendiri.
 | ✅ Presensi | Kehadiran per mata kuliah (hadir/total + persen) — data asli dari server |
 | 📖 Nilai | KHS semester terbaru (SKS, nilai angka & huruf) |
 | 🎓 Status | Profil mahasiswa, SKS aktif, pembayaran UKT, kalender akademik |
+| 📋 Tugas | Deadline tugas dari HE-BAT (e-learning) — badge **LEWAT** (merah), **SEBENTAR** (kuning), atau H-x hari |
 | 💻 E-Learning | Link ke HE-BAT (e-learning UNAIR) |
+
+### Tab 📋 Tugas — siapkan sekali (1 menit)
+
+HEBAT tidak menyediakan token aplikasi, tapi memberi **URL kalender pribadi**
+yang bisa dibaca web ini:
+
+1. Buka **hebat.elearning.unair.ac.id** → login (NIM + password).
+2. Buka **Calendar → Import or export calendars**.
+3. Klik **Get calendar URL** → salin URL yang muncul.
+4. Kembali ke web ini, tab **📋 Tugas** → tempel URL → **Simpan Kalender HE-BAT**.
+
+Selesai — deadline tugas muncul tanpa perlu login HE-BAT lagi. URL kalender
+itu berisi kunci khusus akunmu, jadi jangan dibagikan ke orang lain.
 
 ## Kalau ada masalah
 
