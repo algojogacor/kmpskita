@@ -70,12 +70,19 @@ Body (form): email=<email kampus>  password=<password PLAINTEXT>
 | `/akademik/peserta-mata-kuliah` | GET | ✅ 10 MK |
 | `/akademik/ipk` | GET | ⛔ bug server (IPK_MHS NULL → 500), bukan salah client |
 | `/akademik/ips`, `sks-lulus`, `skor-skp`, `tes-elpt` | GET | ⛔ data belum ada (angkatan baru) |
-| `/kemahasiswaan/presensi-kuliah` | GET | ✅ 8 MK: TM, HADIR, PROSEN |
+| `/akademik/elpt-maba` | GET | ✅ **BARU** skor ELPT maba (LISTENING/READING/STRUCTURE/SCORE) |
+| `/akademik/pedoman-prosedur` | POST | ✅ **BARU** dokumen PP kemahasiswaan (KODE_DOKUMEN, NAMA_FILE) |
+| `/akademik/prosen-nilai-D`, `training-elpt` | GET | ⛔ kosong (ada di binary app) |
+| `/kemahasiswaan/presensi-kuliah` | GET | ✅ 8 MK: TM, HADIR, PROSEN, ID_PENGAMBILAN_MK |
+| `/kemahasiswaan/presensi-kuliah-detail/{id}` | GET | ⛔ ada di binary, format path param, data kosong utk ID dites |
 | `/kemahasiswaan/riwayat-khs` | POST + `semester` | ✅ nilai per MK (SKS, NILAI, NILAI_HURUF) |
 | `/kemahasiswaan/pembayaran` | GET | ✅ UKT (bank, nominal, status) |
 | `/kemahasiswaan/hist-her` | GET | ✅ |
 | `/kemahasiswaan/penyerahan-ktm` | GET | ✅ |
-| `/kemahasiswaan/inbox`, `tkm` | GET | ⛔ kosong |
+| `/kemahasiswaan/inbox`, `tkm`, `khp/` | GET | ⛔ kosong / 404 |
+| `/kemahasiswaan/update-status-*` (inbox) | POST? | ⚠️ ada di binary, method GET → 405, TIDAK dicoba (mutasi) |
+| `/auth/profile` | GET | ✅ **BARU** profil lengkap termasuk ALAMAT_MHS (PII berlebih, lihat Temuan) |
+| `/auth/one-drive`, `/auth/reset-password` | POST | ⚠️ **reset-password = TEMUAN KRITIS, lihat bagian Temuan Keamanan** |
 
 ### CORS (penting untuk web statis)
 - API **meng-echo origin mana pun** (`Access-Control-Allow-Origin: <origin>`) +
@@ -115,6 +122,47 @@ Body (form): email=<email kampus>  password=<password PLAINTEXT>
 - IP datacenter (AWS/Vercel) **diterima** server (dapat 401, bukan timeout) →
   deploy Vercel layak. WiFi rumah diblokir; seluler OK; VPN ke luar negeri juga
   tembus (IP datacenter diterima).
+
+## Temuan Keamanan (2026-08-12) — semuanya dari posisi "akun sendiri"
+
+### 🔴 KRITIS — `/auth/reset-password` tanpa verifikasi password lama + tanpa validasi input
+```
+POST /auth/reset-password   (header: Authorization: Bearer <JWT>)
+```
+- Body `{password: <baru>}` → **mengganti password TANPA perlu password lama**
+  (server tidak memverifikasi old password sama sekali).
+- Body **kosong** → tetap `200 "Berhasil ganti password"` dan password diubah ke
+  nilai kosong/null → **akun terkunci** (login asli 401; login kosong 422).
+- Dampak: siapa pun yang memegang token valid akun korban (bocor token,
+  perangkat bersama, XSS di mana pun token disimpan) bisa **mengambil alih
+  akun** dan **mengunci pemiliknya**. Tanpa token, endpoint 401 "You are not
+  logged in" (jadi tidak bisa dipakai tanpa sesi).
+- **Teruji nyata pada akun sendiri 2026-08-12**: password asli sempat tidak
+  bisa login, lalu **dipulihkan** via endpoint yang sama `{password: <asli>}`
+  + verifikasi login berhasil. Tidak ada data lain yang tersentuh.
+- Saran perbaikan (untuk laporan): wajib verifikasi password lama,
+  validasi `password` tidak boleh kosong, rate-limit.
+
+### 🟡 MINOR — temuan lain
+- `/auth/profile` mengembalikan PII berlebih (alamat rumah lengkap) — lebih
+  banyak dari yang dibutuhkan status-mhs.
+- CORS echo origin apa pun **+** `Access-Control-Allow-Credentials: true`
+  (kombinasi berisiko jika auth cookie pernah dipakai; saat ini token Bearer
+  di storage, tidak eksploitatif langsung).
+- `Server: nginx/1.22.1` (versi 2022 ter-expose).
+- Binary app berisi URL **`http://210.57.208.213:9092`** (HTTP plaintext, IP
+  lama/dev) dan `https://cybercampus.unair.ac.id/foto_mhs/<NIM>.JPG` tanpa
+  autentikasi (foto mahasiswa publik via NIM).
+
+### ✅ Diuji & aman
+- JWT `alg:none` (tanpa signature) → **ditolak 401** (verifikasi signature jalan).
+- TLS 1.3, cipher kuat (TLS_AES_256_GCM_SHA384), sertifikat Sectigo valid.
+- HSTS (1 thn + includeSubDomains), X-Frame-Options SAMEORIGIN, nosniff, CSP.
+- Binary `libapp.so`: **tidak ada** API key Google/Firebase/private key/JWT
+  hardcoded (higienis).
+
+### Kontak resmi (dari binary app, untuk responsible disclosure)
+- `direktorat@ditsi.unair.ac.id` · Telegram resmi: `t.me/ULT_UNAIR`
 
 ## Belum dipecahkan
 
