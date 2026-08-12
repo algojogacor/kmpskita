@@ -164,6 +164,26 @@ POST /auth/reset-password   (header: Authorization: Bearer <JWT>)
 ### Kontak resmi (dari binary app, untuk responsible disclosure)
 - `direktorat@ditsi.unair.ac.id` · Telegram resmi: `t.me/ULT_UNAIR`
 
+## HE-BAT (e-Learning UNAIR) — Moodle REST API (terverifikasi 2026-08-12)
+
+- Platform **Moodle**, web service REST **AKTIF**: `webservice/rest/server.php` →
+  tanpa token valid balas `invalidtoken` (endpoint jalan).
+- **Login**: NIM + password → `POST /login/token.php` + `service=moodle_mobile`
+  (service **aktif** — kredensial salah → "Invalid login", bukan "service not
+  available") → respons JSON berisi **token di body** (bisa dibaca browser,
+  beda dari JWT Kampus Kita yang di Set-Cookie).
+- **CORS `Access-Control-Allow-Origin: *`** di token.php DAN webservice →
+  browser bisa fetch langsung, **tanpa proxy**.
+- Token disimpan `localStorage['kk_moodle_token']`; tab **📋 Tugas** di web:
+  - `core_enrol_get_users_courses` (userid=0 → kursus sendiri)
+  - `mod_assign_get_assignments` (courseids → daftar tugas + duedate + submissionstatus)
+  - `core_calendar_get_calendar_upcoming_events` (acara mendatang)
+  - format `moodlewsrestformat=json`; error format `{"error":...}`
+- Temuan minor: response error bocor **stacktrace path server** (`/public/lib/...`)
+  + `reproductionlink` — info disclosure kecil.
+- Batas: hanya wsfunction untuk data akun sendiri; jangan sentuh wsfunction
+  admin/grading orang lain.
+
 ## Belum dipecahkan
 
 - `/api/auth/login` apicybercampus (token sistem berbeda; semua varian balas

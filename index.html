@@ -62,6 +62,7 @@ a{color:var(--accent)}
   <button data-v="week"><span class="ic">📅</span>Minggu Ini</button>
   <button data-v="presensi"><span class="ic">✅</span>Presensi</button>
   <button data-v="nilai"><span class="ic">📖</span>Nilai</button>
+  <button data-v="tugas"><span class="ic">📋</span>Tugas</button>
   <button data-v="status"><span class="ic">🎓</span>Status</button>
   <button data-v="elearn"><span class="ic">💻</span>E-Learning</button>
 </nav>
@@ -87,6 +88,48 @@ async function api(path, method, params){
 }
 const apiGet=p=>api(p,'GET');
 const apiPost=(p,q)=>api(p,'POST',q);
+// ---- HE-BAT (Moodle) — CORS server terbuka (*), fetch langsung tanpa proxy ----
+const MOODLE='https://hebat.elearning.unair.ac.id';
+function getMoodleTok(){ return localStorage.getItem('kk_moodle_token')||''; }
+async function moodleLogin(){
+  const nim=$('mnim').value.trim(), pw=$('mpass').value;
+  if(!nim||!pw){ $('view').innerHTML=moodleLoginForm('isi NIM dan password dulu'); return; }
+  $('view').innerHTML='<div class="empty">masuk HE-BAT…</div>';
+  try{
+    const r=await fetch(MOODLE+'/login/token.php',{method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'username='+encodeURIComponent(nim)+'&password='+encodeURIComponent(pw)+'&service=moodle_mobile'});
+    const j=await r.json();
+    if(!j.token) throw new Error(j.error||'login HE-BAT gagal');
+    localStorage.setItem('kk_moodle_token',j.token);
+    document.querySelector('nav button[data-v="tugas"]').click();
+  }catch(e){ $('view').innerHTML=moodleLoginForm(e.message); }
+}
+function moodleLoginForm(msg){
+  return '<div class="setup"><div class="mk">📋 Tugas HE-BAT (e-Learning)</div>'+
+    '<div class="hint">Login dengan <b>NIM</b> + password HE-BAT — untuk daftar tugas, deadline, dan acara kuliah. Token disimpan hanya di perangkat ini.</div>'+
+    (msg?'<div class="hint" style="color:#f87171">'+esc(msg)+'</div>':'')+
+    '<input id="mnim" type="text" placeholder="NIM" autocomplete="username">'+
+    '<input id="mpass" type="password" placeholder="password HE-BAT" autocomplete="current-password">'+
+    '<button onclick="moodleLogin()">Masuk HE-BAT</button></div>';
+}
+async function moodleApi(fn,params){
+  const u=new URL(MOODLE+'/webservice/rest/server.php');
+  u.searchParams.set('wstoken',getMoodleTok());
+  u.searchParams.set('wsfunction',fn);
+  u.searchParams.set('moodlewsrestformat','json');
+  for(const k in params||{}){
+    const v=params[k];
+    if(Array.isArray(v)) v.forEach((x,i)=>u.searchParams.set(k+'['+i+']',x));
+    else u.searchParams.set(k,v);
+  }
+  const r=await fetch(u);
+  const j=await r.json();
+  if(j.error||j.exception) throw new Error(j.error||'HE-BAT: '+j.message);
+  return j;
+}
+const fmtTS=ts=>{ if(!ts) return '—'; const d=new Date(ts*1000); return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); };
+function moodleLogout(){ localStorage.removeItem('kk_moodle_token'); document.querySelector('nav button[data-v="tugas"]').click(); }
 
 // ---- setup: login email+password ATAU paste token ----
 function setupView(){
@@ -217,6 +260,42 @@ const VIEWS={
     $('view').innerHTML=
       '<a class="link-btn" href="https://hebat.elearning.unair.ac.id/hebat-v2/" target="_blank" rel="noopener"><div class="t">💻 HE-BAT (e-Learning UNAIR)</div><div class="s">hebat.elearning.unair.ac.id/hebat-v2/ · buka di tab baru</div></a>'+
       '<a class="link-btn" href="https://apikampuskita-mahasiswa.unair.ac.id/" target="_blank" rel="noopener"><div class="t">🏛 Portal Kampus Kita</div><div class="s">sumber data</div></a>';
+  },
+  tugas:async()=>{
+    if(!getMoodleTok()){ $('view').innerHTML=moodleLoginForm(''); return; }
+    $('view').innerHTML='<div class="empty">memuat tugas HE-BAT…</div>';
+    const now=Math.floor(Date.now()/1000);
+    const courses=await moodleApi('core_enrol_get_users_courses',{userid:0});
+    const cname=id=>{ const c=(courses||[]).find(x=>x.id==id); return c?c.fullname:'#'+id; };
+    let assigns={courses:[]}, events={events:[]};
+    if(courses&&courses.length) assigns=await moodleApi('mod_assign_get_assignments',{courseids:courses.map(c=>c.id)});
+    try{ events=await moodleApi('core_calendar_get_calendar_upcoming_events',{eventslimit:40}); }catch(e){}
+    let list=[];
+    (assigns.courses||[]).forEach(c=>(c.assignments||[]).forEach(a=>{
+      list.push({name:a.name,course:c.id,due:a.duedate||0,st:a.submissionstatus||''});
+    }));
+    list.sort((a,b)=>a.due-b.due);
+    const badge=a=>{
+      if(!a.due) return '<span style="color:var(--muted);font-size:.75em">tanpa deadline</span>';
+      const left=a.due-now;
+      if(left<0) return '<b style="color:#f87171">LEWAT '+fmtTS(a.due)+'</b>';
+      if(left<86400) return '<b style="color:#fbbf24">SEBENTAR '+fmtTS(a.due)+'</b>';
+      return '<span style="color:var(--muted);font-size:.82em">H-'+Math.ceil(left/86400)+' · '+fmtTS(a.due)+'</span>';
+    };
+    const stTxt=s=> s==='submitted'?' ✅ dikumpul' : s==='reopened'?' ⚠ dibuka lagi' : '';
+    let html='<div style="display:flex;justify-content:space-between;align-items:center">'+
+      '<div class="hdr" style="margin:0">Tugas & Deadline</div>'+
+      '<span style="font-size:.75em;color:var(--muted)"><a href="javascript:moodleLogout()">keluar HE-BAT</a></span></div>';
+    if(!list.length) html+='<div class="empty">tidak ada tugas dari Moodle</div>';
+    list.forEach(a=>{ html+='<div class="card" style="padding:10px 14px;margin-bottom:8px;border-left:4px solid '+((a.due&&a.due<now)?'#f87171':(a.due&&a.due-now<86400?'#fbbf24':'var(--accent)'))+'">'+
+      '<div style="font-weight:600;font-size:.92em">'+esc(a.name)+'</div>'+
+      '<div style="color:var(--muted);font-size:.8em">'+esc(cname(a.course))+stTxt(a.st)+'</div>'+
+      badge(a)+'</div>'; });
+    if(events.events&&events.events.length){
+      html+='<div class="hdr">Acara Mendatang</div>';
+      events.events.slice(0,12).forEach(e=>{ html+='<div class="row"><span>'+esc(e.name.length>60?e.name.slice(0,60)+'…':e.name)+'</span><b style="color:var(--muted);font-size:.82em">'+esc(e.formattedtime||fmtTS(e.timestart))+'</b></div>'; });
+    }
+    $('view').innerHTML=html;
   }
 };
 document.querySelectorAll('nav button').forEach(b=>b.onclick=async()=>{
@@ -230,7 +309,7 @@ function boot(){
   $('meta').textContent='tersambung ke Kampus Kita';
   document.querySelectorAll('nav button')[0].click();
 }
-$('out').onclick=()=>{ localStorage.removeItem('kk_token'); setupView(); };
+$('out').onclick=()=>{ localStorage.removeItem('kk_token'); localStorage.removeItem('kk_moodle_token'); setupView(); };
 if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 boot();
 </script></body></html>
